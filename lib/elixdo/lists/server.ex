@@ -56,6 +56,7 @@ defmodule Elixdo.Lists.Server do
       {:ok, new_items} = result ->
         updated = state.items ++ new_items
         Enum.each(new_items, &Elixdo.SearchIndex.index_item/1)
+        broadcast(state.date, updated)
         schedule_flush()
         {:reply, result, %{state | items: updated, dirty: true}, {:continue, :reset_idle}}
       error ->
@@ -69,6 +70,7 @@ defmodule Elixdo.Lists.Server do
         items = Enum.map(state.items, fn i ->
           if i.id == updated_item.id, do: updated_item, else: i
         end)
+        broadcast(state.date, items)
         schedule_flush()
         {:reply, result, %{state | items: items, dirty: true}, {:continue, :reset_idle}}
       error ->
@@ -83,6 +85,7 @@ defmodule Elixdo.Lists.Server do
           if i.id == original.id, do: original, else: i
         end)
         Elixdo.SearchIndex.index_item(copy)
+        broadcast(state.date, items)
         schedule_flush()
         {:reply, result, %{state | items: items, dirty: true}, {:continue, :reset_idle}}
       error ->
@@ -93,11 +96,16 @@ defmodule Elixdo.Lists.Server do
   def handle_call({:reorder_items, ids}, _from, state) do
     case state.context.reorder_items(state.date, ids) do
       {:ok, reordered} = result ->
+        broadcast(state.date, reordered)
         schedule_flush()
         {:reply, result, %{state | items: reordered, dirty: true}, {:continue, :reset_idle}}
       error ->
         {:reply, error, state}
     end
+  end
+
+  defp broadcast(date, items) do
+    Phoenix.PubSub.broadcast(Elixdo.PubSub, "list:#{date}", {:list_updated, date, items})
   end
 
   def handle_continue(:reset_idle, state) do

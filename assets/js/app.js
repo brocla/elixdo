@@ -25,9 +25,11 @@ import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/elixdo"
 import topbar from "../vendor/topbar"
 import Swipe from "./swipe"
+import AddItem from "./add_item"
 
 let Hooks = {...colocatedHooks}
 Hooks.Swipe = Swipe
+Hooks.AddItem = AddItem
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {

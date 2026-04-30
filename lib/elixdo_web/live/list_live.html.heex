@@ -2,7 +2,41 @@
      phx-window-keydown="key_nav"
      phx-hook="Swipe">
 
-  <div class="toolbar">
+  <div class="toolbar" id="toolbar">
+    <div class="toolbar-left">
+      <button phx-click="select_all" class="toolbar-btn">☑ All</button>
+      <button phx-click="deselect_all" class="toolbar-btn">☐ None</button>
+    </div>
+
+    <div class="toolbar-actions">
+      <button phx-click="set_status" phx-value-status="completed" class="toolbar-btn" title="Complete">✓</button>
+      <button phx-click="set_status" phx-value-status="wiggled_out" class="toolbar-btn" title="Wiggle out">≈</button>
+      <button phx-click="arrow_selected" class="toolbar-btn" title="Arrow forward">→</button>
+      <button phx-click="set_status" phx-value-status="active" class="toolbar-btn" title="Restore">↺</button>
+
+      <span class="toolbar-sep">|</span>
+
+      <button phx-click="set_decoration" phx-value-field="bold" phx-value-value="true" class="toolbar-btn" title="Bold"><b>B</b></button>
+      <button phx-click="set_decoration" phx-value-field="italic" phx-value-value="true" class="toolbar-btn" title="Italic"><i>I</i></button>
+      <button phx-click="set_decoration" phx-value-field="highlighted" phx-value-value="true" class="toolbar-btn" title="Highlight">▐</button>
+
+      <span class="toolbar-sep">|</span>
+
+      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="red"    class="toolbar-btn color-swatch" style="color:#E53935" title="Red">●</button>
+      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="blue"   class="toolbar-btn color-swatch" style="color:#1E88E5" title="Blue">●</button>
+      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="green"  class="toolbar-btn color-swatch" style="color:#43A047" title="Green">●</button>
+      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="purple" class="toolbar-btn color-swatch" style="color:#8E24AA" title="Purple">●</button>
+      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="orange" class="toolbar-btn color-swatch" style="color:#FB8C00" title="Orange">●</button>
+      <button phx-click="set_decoration" phx-value-field="color" phx-value-value=""       class="toolbar-btn color-swatch" title="No color">○</button>
+
+      <span class="toolbar-sep">|</span>
+
+      <form phx-submit="set_decoration" class="prefix-form">
+        <input type="hidden" name="field" value="prefix" />
+        <input type="text" name="value" placeholder="pfx" class="prefix-input" maxlength="3" />
+      </form>
+    </div>
+
     <%= if @date != @today do %>
       <button phx-click="go_today" class="today-btn">↩ Today</button>
     <% end %>
@@ -27,17 +61,51 @@
 
   <ul class="items-list">
     <%= for item <- @items do %>
-      <li class={"item #{item_class(item)}"} style={"#{color_style(item)}"}>
-        <span class={"item-body #{format_class(item)}"}>
-          <%= if item.prefix do %>
-            <span class="prefix"><%= item.prefix %></span>
-          <% end %>
-          <%= item.body %>
-          <%= if item.status == :arrowed_out && item.arrowed_to_date do %>
-            <span class="arrow-annotation"> → <%= item.arrowed_to_date %></span>
-          <% end %>
-        </span>
+      <li class={"item #{item_class(item)}"} style={color_style(item)}>
+        <button phx-click="toggle_select" phx-value-id={item.id}
+                class={"select-btn #{if MapSet.member?(@selected, item.id), do: "selected", else: ""}"}>
+          <%= if MapSet.member?(@selected, item.id), do: "●", else: "○" %>
+        </button>
+
+        <%= if @editing_id == item.id do %>
+          <form phx-submit="save_edit" class="edit-form">
+            <input type="hidden" name="_id" value={item.id} />
+            <textarea name="body" autofocus class="edit-textarea"><%= item.body %></textarea>
+            <button type="submit" class="save-btn">Save</button>
+            <button type="button" phx-click="cancel_edit" class="cancel-btn">Cancel</button>
+          </form>
+        <% else %>
+          <span class={"item-body #{format_class(item)}"}
+                phx-click="start_edit" phx-value-id={item.id}>
+            <%= if item.prefix do %><span class="prefix"><%= item.prefix %></span><% end %>
+            <%= item.body %>
+            <%= if item.status == :arrowed_out && item.arrowed_to_date do %>
+              <span class="arrow-annotation"> → <%= item.arrowed_to_date %></span>
+            <% end %>
+          </span>
+        <% end %>
       </li>
     <% end %>
   </ul>
+
+  <form phx-submit="add_item" class="add-item-form">
+    <textarea name="body" placeholder="Add item... (Enter to save, Shift+Enter for newline)"
+              phx-hook="AddItem"
+              id="add-item-input"
+              class="add-item-input" rows="2"></textarea>
+    <button type="submit" class="add-btn">Add</button>
+  </form>
+
+  <%= if @arrow_modal do %>
+    <div class="modal-overlay">
+      <div class="modal">
+        <h3>Arrow forward to date</h3>
+        <form phx-submit="confirm_arrow">
+          <input type="date" name="to_date" required autofocus />
+          <button type="submit">Arrow</button>
+          <button type="button" phx-click="cancel_arrow">Cancel</button>
+        </form>
+      </div>
+    </div>
+  <% end %>
 </div>
