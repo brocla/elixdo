@@ -43,7 +43,7 @@ defmodule ElixdoWeb.ListLiveTest do
 
   test "date picker jump navigates to selected date", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/#{secret()}/list")
-    html = view |> element("#date-picker") |> render_change(%{"date" => "2026-06-15"})
+    html = view |> element("#date-picker-form") |> render_change(%{"date" => "2026-06-15"})
     assert html =~ "June 15, 2026"
   end
 

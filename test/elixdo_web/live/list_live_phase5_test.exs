@@ -102,8 +102,8 @@ defmodule ElixdoWeb.ListLivePhase5Test do
 
     {:ok, view, _} = live(conn, list_path("2026-05-22"))
     view |> element("[phx-click='toggle_select'][phx-value-id='#{item.id}']") |> render_click()
-    html = view |> element("[phx-click='set_decoration'][phx-value-field='color'][phx-value-value='red']") |> render_click()
-    assert html =~ "#E53935"
+    html = view |> element("[phx-click='set_decoration'][phx-value-field='color'][phx-value-setting='red']") |> render_click()
+    assert html =~ "color-red"
   end
 
   test "arrow out flow: modal appears, copy created on target date", %{conn: conn} do

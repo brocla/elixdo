@@ -4,65 +4,66 @@
 
   <div class="toolbar" id="toolbar">
     <div class="toolbar-left">
-      <button phx-click="select_all" class="toolbar-btn">☑ All</button>
-      <button phx-click="deselect_all" class="toolbar-btn">☐ None</button>
+      <button type="button" phx-click="select_all" class="toolbar-btn">☑ All</button>
+      <button type="button" phx-click="deselect_all" class="toolbar-btn">☐ None</button>
     </div>
 
     <div class="toolbar-actions">
-      <button phx-click="set_status" phx-value-status="completed" class="toolbar-btn" title="Complete">✓</button>
-      <button phx-click="set_status" phx-value-status="wiggled_out" class="toolbar-btn" title="Wiggle out">≈</button>
-      <button phx-click="arrow_selected" class="toolbar-btn" title="Arrow forward">→</button>
-      <button phx-click="set_status" phx-value-status="active" class="toolbar-btn" title="Restore">↺</button>
+      <button type="button" phx-click="set_status" phx-value-status="completed" class="toolbar-btn" title="Complete">✓</button>
+      <button type="button" phx-click="set_status" phx-value-status="wiggled_out" class="toolbar-btn" title="Wiggle out">≈</button>
+      <button type="button" phx-click="arrow_selected" class="toolbar-btn" title="Arrow forward">→</button>
+      <button type="button" phx-click="set_status" phx-value-status="active" class="toolbar-btn" title="Restore">↺</button>
 
       <span class="toolbar-sep">|</span>
 
-      <button phx-click="set_decoration" phx-value-field="bold" phx-value-value="true" class="toolbar-btn" title="Bold"><b>B</b></button>
-      <button phx-click="set_decoration" phx-value-field="italic" phx-value-value="true" class="toolbar-btn" title="Italic"><i>I</i></button>
-      <button phx-click="set_decoration" phx-value-field="highlighted" phx-value-value="true" class="toolbar-btn" title="Highlight">▐</button>
+      <button type="button" phx-click="set_decoration" phx-value-field="bold" phx-value-setting="true" class="toolbar-btn" title="Bold"><b>B</b></button>
+      <button type="button" phx-click="set_decoration" phx-value-field="italic" phx-value-setting="true" class="toolbar-btn" title="Italic"><i>I</i></button>
+      <button type="button" phx-click="set_decoration" phx-value-field="highlighted" phx-value-setting="true" class="toolbar-btn" title="Highlight">▐</button>
 
       <span class="toolbar-sep">|</span>
 
-      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="red"    class="toolbar-btn color-swatch" style="color:#E53935" title="Red">●</button>
-      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="blue"   class="toolbar-btn color-swatch" style="color:#1E88E5" title="Blue">●</button>
-      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="green"  class="toolbar-btn color-swatch" style="color:#43A047" title="Green">●</button>
-      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="purple" class="toolbar-btn color-swatch" style="color:#8E24AA" title="Purple">●</button>
-      <button phx-click="set_decoration" phx-value-field="color" phx-value-value="orange" class="toolbar-btn color-swatch" style="color:#FB8C00" title="Orange">●</button>
-      <button phx-click="set_decoration" phx-value-field="color" phx-value-value=""       class="toolbar-btn color-swatch" title="No color">○</button>
+      <button type="button" phx-click="set_decoration" phx-value-field="color" phx-value-setting="red"    class="toolbar-btn color-swatch" style="color:#E53935" title="Red">●</button>
+      <button type="button" phx-click="set_decoration" phx-value-field="color" phx-value-setting="blue"   class="toolbar-btn color-swatch" style="color:#1E88E5" title="Blue">●</button>
+      <button type="button" phx-click="set_decoration" phx-value-field="color" phx-value-setting="green"  class="toolbar-btn color-swatch" style="color:#43A047" title="Green">●</button>
+      <button type="button" phx-click="set_decoration" phx-value-field="color" phx-value-setting="purple" class="toolbar-btn color-swatch" style="color:#8E24AA" title="Purple">●</button>
+      <button type="button" phx-click="set_decoration" phx-value-field="color" phx-value-setting="orange" class="toolbar-btn color-swatch" style="color:#FB8C00" title="Orange">●</button>
+      <button type="button" phx-click="set_decoration" phx-value-field="color" phx-value-setting=""       class="toolbar-btn color-swatch" title="No color">○</button>
 
       <span class="toolbar-sep">|</span>
 
       <form phx-submit="set_decoration" class="prefix-form">
         <input type="hidden" name="field" value="prefix" />
-        <input type="text" name="value" placeholder="pfx" class="prefix-input" maxlength="3" />
+        <input type="text" name="setting" placeholder="pfx" class="prefix-input" maxlength="3" />
       </form>
     </div>
 
     <%= if @date != @today do %>
-      <button phx-click="go_today" class="today-btn">↩ Today</button>
+      <button type="button" phx-click="go_today" class="today-btn">↩ Today</button>
     <% end %>
   </div>
 
   <div class="date-header">
-    <button phx-click="prev_day" class="nav-arrow nav-left">←</button>
+    <button type="button" phx-click="prev_day" class="nav-arrow nav-left">←</button>
 
     <div class="date-display">
       <label for="date-picker">
         <%= Calendar.strftime(@date, "%A, %B %-d, %Y") %>
       </label>
-      <input type="date" id="date-picker"
-             value={Date.to_iso8601(@date)}
-             phx-change="jump_date"
-             name="date"
-             class="date-picker-input" />
+      <form phx-change="jump_date" id="date-picker-form">
+        <input type="date" id="date-picker"
+               value={Date.to_iso8601(@date)}
+               name="date"
+               class="date-picker-input" />
+      </form>
     </div>
 
-    <button phx-click="next_day" class="nav-arrow nav-right">→</button>
+    <button type="button" phx-click="next_day" class="nav-arrow nav-right">→</button>
   </div>
 
   <ul class="items-list">
     <%= for item <- @items do %>
-      <li class={"item #{item_class(item)}"} style={color_style(item)}>
-        <button phx-click="toggle_select" phx-value-id={item.id}
+      <li class={"item #{item_class(item)}"}>
+        <button type="button" phx-click="toggle_select" phx-value-id={item.id}
                 class={"select-btn #{if MapSet.member?(@selected, item.id), do: "selected", else: ""}"}>
           <%= if MapSet.member?(@selected, item.id), do: "●", else: "○" %>
         </button>
@@ -75,7 +76,7 @@
             <button type="button" phx-click="cancel_edit" class="cancel-btn">Cancel</button>
           </form>
         <% else %>
-          <span class={"item-body #{format_class(item)}"}
+          <span class={"item-body #{item_classes(item)}"}
                 phx-click="start_edit" phx-value-id={item.id}>
             <%= if item.prefix do %><span class="prefix"><%= item.prefix %></span><% end %>
             <%= item.body %>
@@ -96,16 +97,17 @@
     <button type="submit" class="add-btn">Add</button>
   </form>
 
-  <%= if @arrow_modal do %>
-    <div class="modal-overlay">
-      <div class="modal">
-        <h3>Arrow forward to date</h3>
-        <form phx-submit="confirm_arrow">
-          <input type="date" name="to_date" required autofocus />
-          <button type="submit">Arrow</button>
-          <button type="button" phx-click="cancel_arrow">Cancel</button>
-        </form>
-      </div>
-    </div>
-  <% end %>
 </div>
+
+<%= if @arrow_modal do %>
+  <div class="modal-overlay" phx-click="cancel_arrow">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>Arrow forward to date</h3>
+      <form phx-submit="confirm_arrow">
+        <input type="date" name="to_date" required autofocus />
+        <button type="submit">Arrow</button>
+        <button type="button" phx-click="cancel_arrow">Cancel</button>
+      </form>
+    </div>
+  </div>
+<% end %>

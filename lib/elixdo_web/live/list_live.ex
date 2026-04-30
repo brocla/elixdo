@@ -138,25 +138,25 @@ defmodule ElixdoWeb.ListLive do
       Lists.update_item(item, %{status: status})
     end)
     items = Lists.get_items_for_date(socket.assigns.date)
-    {:noreply, assign(socket, items: items, selected: MapSet.new())}
+    {:noreply, assign(socket, :items, items)}
   end
 
   # Toolbar decoration actions
-  def handle_event("set_decoration", %{"field" => field, "value" => value}, socket) do
+  def handle_event("set_decoration", %{"field" => field, "setting" => setting}, socket) do
     selected_items = Enum.filter(socket.assigns.items, & MapSet.member?(socket.assigns.selected, &1.id))
     attrs = case field do
-      "bold"        -> %{bold: value == "true"}
-      "italic"      -> %{italic: value == "true"}
-      "highlighted" -> %{highlighted: value == "true"}
-      "color"       -> %{color: if(value == "", do: nil, else: String.to_existing_atom(value))}
-      "prefix"      -> %{prefix: if(value == "", do: nil, else: value)}
+      "bold"        -> %{bold: setting == "true"}
+      "italic"      -> %{italic: setting == "true"}
+      "highlighted" -> %{highlighted: setting == "true"}
+      "color"       -> %{color: if(setting == "", do: nil, else: String.to_existing_atom(setting))}
+      "prefix"      -> %{prefix: if(setting == "", do: nil, else: setting)}
       _             -> %{}
     end
     Enum.each(selected_items, fn item ->
       Lists.update_item(item, attrs)
     end)
     items = Lists.get_items_for_date(socket.assigns.date)
-    {:noreply, assign(socket, items: items, selected: MapSet.new())}
+    {:noreply, assign(socket, :items, items)}
   end
 
   # Arrow-out flow
@@ -212,18 +212,20 @@ defmodule ElixdoWeb.ListLive do
   defp item_class(%{status: :arrowed_out}), do: "arrowed-out"
   defp item_class(_),                        do: "active"
 
-  defp format_class(item) do
+  defp item_classes(item) do
     [
+      item_class(item),
       (if item.bold,        do: "bold",        else: nil),
       (if item.italic,      do: "italic",      else: nil),
-      (if item.highlighted, do: "highlighted", else: nil)
+      (if item.highlighted, do: "highlighted", else: nil),
+      color_class(item.color)
     ] |> Enum.reject(&is_nil/1) |> Enum.join(" ")
   end
 
-  defp color_style(%{color: nil}), do: ""
-  defp color_style(%{color: :red}),    do: "color: #E53935;"
-  defp color_style(%{color: :blue}),   do: "color: #1E88E5;"
-  defp color_style(%{color: :green}),  do: "color: #43A047;"
-  defp color_style(%{color: :purple}), do: "color: #8E24AA;"
-  defp color_style(%{color: :orange}), do: "color: #FB8C00;"
+  defp color_class(nil),     do: nil
+  defp color_class(:red),    do: "color-red"
+  defp color_class(:blue),   do: "color-blue"
+  defp color_class(:green),  do: "color-green"
+  defp color_class(:purple), do: "color-purple"
+  defp color_class(:orange), do: "color-orange"
 end
