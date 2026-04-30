@@ -29,6 +29,7 @@ defmodule Elixdo.DataCase do
 
   setup tags do
     Elixdo.DataCase.setup_sandbox(tags)
+    Elixdo.DataCase.stop_list_servers()
     :ok
   end
 
@@ -38,6 +39,18 @@ defmodule Elixdo.DataCase do
   def setup_sandbox(tags) do
     pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Elixdo.Repo, shared: not tags[:async])
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+  end
+
+  @doc """
+  Stops all running List.Server processes so each test starts with a clean slate.
+  """
+  def stop_list_servers do
+    if Process.whereis(Elixdo.Lists.Supervisor) do
+      children = DynamicSupervisor.which_children(Elixdo.Lists.Supervisor)
+      Enum.each(children, fn {_, pid, _, _} ->
+        if is_pid(pid), do: DynamicSupervisor.terminate_child(Elixdo.Lists.Supervisor, pid)
+      end)
+    end
   end
 
   @doc """

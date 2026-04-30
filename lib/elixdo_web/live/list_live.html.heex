@@ -1,0 +1,43 @@
+<div class="list-container" id="list-live"
+     phx-window-keydown="key_nav"
+     phx-hook="Swipe">
+
+  <div class="toolbar">
+    <%= if @date != @today do %>
+      <button phx-click="go_today" class="today-btn">↩ Today</button>
+    <% end %>
+  </div>
+
+  <div class="date-header">
+    <button phx-click="prev_day" class="nav-arrow nav-left">←</button>
+
+    <div class="date-display">
+      <label for="date-picker">
+        <%= Calendar.strftime(@date, "%A, %B %-d, %Y") %>
+      </label>
+      <input type="date" id="date-picker"
+             value={Date.to_iso8601(@date)}
+             phx-change="jump_date"
+             name="date"
+             class="date-picker-input" />
+    </div>
+
+    <button phx-click="next_day" class="nav-arrow nav-right">→</button>
+  </div>
+
+  <ul class="items-list">
+    <%= for item <- @items do %>
+      <li class={"item #{item_class(item)}"} style={"#{color_style(item)}"}>
+        <span class={"item-body #{format_class(item)}"}>
+          <%= if item.prefix do %>
+            <span class="prefix"><%= item.prefix %></span>
+          <% end %>
+          <%= item.body %>
+          <%= if item.status == :arrowed_out && item.arrowed_to_date do %>
+            <span class="arrow-annotation"> → <%= item.arrowed_to_date %></span>
+          <% end %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+</div>

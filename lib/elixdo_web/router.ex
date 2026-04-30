@@ -18,6 +18,8 @@ defmodule ElixdoWeb.Router do
   scope "/:secret", ElixdoWeb do
     pipe_through :browser
     get "/", PageController, :index
+    live "/list", ListLive
+    live "/list/:date", ListLive
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

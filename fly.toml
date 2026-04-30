@@ -1,5 +1,5 @@
 app = "elixdo"
-primary_region = "den"
+primary_region = "dfw"
 
 [build]
 
@@ -23,6 +23,9 @@ primary_region = "den"
   memory = "256mb"
   cpu_kind = "shared"
   cpus = 1
+
+[deploy]
+  release_command = "/app/bin/migrate"
 
 [mounts]
   source = "elixdo_data"

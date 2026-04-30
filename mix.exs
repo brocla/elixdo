@@ -66,7 +66,8 @@ defmodule Elixdo.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:tzdata, "~> 1.1"}
+      {:tzdata, "~> 1.1"},
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 

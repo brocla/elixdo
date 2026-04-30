@@ -36,3 +36,9 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
+
+config :elixdo, clock: Elixdo.Clock.Mock
+config :elixdo, ocr: Elixdo.OCR.Mock
+
+config :elixdo, :list_server_idle_ms, 200   # fast idle for tests
+config :elixdo, :list_server_flush_ms, 50   # fast flush for tests

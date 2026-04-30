@@ -13,7 +13,11 @@ defmodule Elixdo.Application do
       {Ecto.Migrator,
        repos: Application.fetch_env!(:elixdo, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:elixdo, :dns_cluster_query) || :ignore},
+      {Registry, keys: :unique, name: Elixdo.Lists.Registry},
+      Elixdo.Lists.Supervisor,
       {Phoenix.PubSub, name: Elixdo.PubSub},
+      Elixdo.DateWatcher,
+      Elixdo.SearchIndex,
       # Start a worker by calling: Elixdo.Worker.start_link(arg)
       # {Elixdo.Worker, arg},
       # Start to serve requests, typically the last entry
