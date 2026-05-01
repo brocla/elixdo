@@ -50,7 +50,7 @@ defmodule Elixdo.Lists.DB do
     active: [:completed, :wiggled_out, :arrowed_out],
     completed: [:active],
     wiggled_out: [:active],
-    arrowed_out: []
+    arrowed_out: [:active]
   }
 
   def update_item(%ListItem{} = item, attrs) do

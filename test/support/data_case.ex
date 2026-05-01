@@ -47,6 +47,7 @@ defmodule Elixdo.DataCase do
   def stop_list_servers do
     if Process.whereis(Elixdo.Lists.Supervisor) do
       children = DynamicSupervisor.which_children(Elixdo.Lists.Supervisor)
+
       Enum.each(children, fn {_, pid, _, _} ->
         if is_pid(pid), do: DynamicSupervisor.terminate_child(Elixdo.Lists.Supervisor, pid)
       end)

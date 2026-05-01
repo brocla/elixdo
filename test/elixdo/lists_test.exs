@@ -161,10 +161,17 @@ defmodule Elixdo.ListsTest do
       assert updated.status == :completed
     end
 
-    test "forbids arrowed_out -> anything" do
+    test "allows arrowed_out -> active (remove formats undoes arrow)" do
       item = insert_item()
       {:ok, arrowed} = Lists.update_item(item, %{status: :arrowed_out})
-      assert {:error, :forbidden_transition} = Lists.update_item(arrowed, %{status: :active})
+      assert {:ok, restored} = Lists.update_item(arrowed, %{status: :active})
+      assert restored.status == :active
+    end
+
+    test "forbids arrowed_out -> completed" do
+      item = insert_item()
+      {:ok, arrowed} = Lists.update_item(item, %{status: :arrowed_out})
+      assert {:error, :forbidden_transition} = Lists.update_item(arrowed, %{status: :completed})
     end
 
     test "accepts string status" do

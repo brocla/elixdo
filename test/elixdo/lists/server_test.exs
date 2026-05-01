@@ -46,7 +46,7 @@ defmodule Elixdo.Lists.ServerTest do
   test "process restarts automatically after idle shutdown" do
     date = ~D[2026-07-02]
     pid1 = ServerPool.get_or_start(date)
-    ref  = Process.monitor(pid1)
+    ref = Process.monitor(pid1)
     assert_receive {:DOWN, ^ref, :process, ^pid1, :normal}, 1_000
 
     # Next access starts a new process

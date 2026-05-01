@@ -7,6 +7,7 @@ defmodule Elixdo.Lists.ServerPool do
         else
           start_new(date)
         end
+
       [] ->
         start_new(date)
     end

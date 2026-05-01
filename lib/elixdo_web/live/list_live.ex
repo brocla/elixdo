@@ -211,14 +211,7 @@ defmodule ElixdoWeb.ListLive do
       Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
 
     Enum.each(selected_items, fn item ->
-      base_attrs = %{bold: false, italic: false, highlighted: false, color: nil}
-
-      attrs =
-        if item.status == :arrowed_out,
-          do: base_attrs,
-          else: Map.put(base_attrs, :status, :active)
-
-      Lists.update_item(item, attrs)
+      Lists.update_item(item, %{bold: false, italic: false, highlighted: false, color: nil, status: :active, arrowed_to_date: nil})
     end)
 
     items = Lists.get_items_for_date(socket.assigns.date)

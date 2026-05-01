@@ -15,7 +15,10 @@ defmodule ElixdoWeb.ListLivePhase6Test do
 
   test "reorder event updates item order in LiveView", %{conn: conn} do
     date = ~D[2026-06-01]
-    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "first"}, %{body: "second"}, %{body: "third"}])
+
+    {:ok, items} =
+      Elixdo.Lists.create_items(date, [%{body: "first"}, %{body: "second"}, %{body: "third"}])
+
     [a, b, c] = items
 
     {:ok, view, _} = live(conn, list_path("2026-06-01"))
@@ -33,7 +36,10 @@ defmodule ElixdoWeb.ListLivePhase6Test do
 
   test "reorder persists to SQLite after page reload", %{conn: conn} do
     date = ~D[2026-06-02]
-    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "alpha"}, %{body: "beta"}, %{body: "gamma"}])
+
+    {:ok, items} =
+      Elixdo.Lists.create_items(date, [%{body: "alpha"}, %{body: "beta"}, %{body: "gamma"}])
+
     [a, b, c] = items
 
     {:ok, view, _} = live(conn, list_path("2026-06-02"))
@@ -48,7 +54,10 @@ defmodule ElixdoWeb.ListLivePhase6Test do
 
   test "reorder broadcasts to second tab via PubSub", %{conn: conn} do
     date = ~D[2026-06-03]
-    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "one"}, %{body: "two"}, %{body: "three"}])
+
+    {:ok, items} =
+      Elixdo.Lists.create_items(date, [%{body: "one"}, %{body: "two"}, %{body: "three"}])
+
     [a, b, c] = items
 
     {:ok, view1, _} = live(conn, list_path("2026-06-03"))

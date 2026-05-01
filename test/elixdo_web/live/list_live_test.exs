@@ -97,4 +97,109 @@ defmodule ElixdoWeb.ListLiveTest do
     assert html =~ ~s(class="item arrowed-out")
     assert html =~ "2026-05-13"
   end
+
+  describe "arrow modal" do
+    test "selecting an item and clicking arrow opens the modal", %{conn: conn} do
+      date = ~D[2026-08-01]
+      {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "forward me"}])
+      item = List.first(items)
+      {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-01")
+
+      # Select the item
+      view |> element("button.select-btn[phx-value-id='#{item.id}']") |> render_click()
+
+      # Click the arrow-forward toolbar button
+      html = view |> element("button[phx-click='arrow_selected']") |> render_click()
+
+      # Modal must be present in the DOM
+      assert html =~ "Arrow forward to date"
+      assert html =~ ~s(name="to_date")
+    end
+
+    test "submitting the arrow modal moves the item and shows it on the target date", %{
+      conn: conn
+    } do
+      date = ~D[2026-08-02]
+      {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "move this item"}])
+      item = List.first(items)
+      {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-02")
+
+      # Select and open modal
+      view |> element("button.select-btn[phx-value-id='#{item.id}']") |> render_click()
+      view |> element("button[phx-click='arrow_selected']") |> render_click()
+
+      # Submit with a target date
+      html = view |> element(".elixdo-modal form") |> render_submit(%{"to_date" => "2026-08-10"})
+
+      # Modal closes and original item is now arrowed-out
+      refute html =~ "Arrow forward to date"
+      assert html =~ ~s(class="item arrowed-out")
+      assert html =~ "2026-08-10"
+    end
+
+    test "arrowed item appears on the target date", %{conn: conn} do
+      date = ~D[2026-08-03]
+      {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "check target date"}])
+      item = List.first(items)
+      {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-03")
+
+      view |> element("button.select-btn[phx-value-id='#{item.id}']") |> render_click()
+      view |> element("button[phx-click='arrow_selected']") |> render_click()
+      view |> element(".elixdo-modal form") |> render_submit(%{"to_date" => "2026-08-11"})
+
+      # Navigate to the target date — the copy should be active there
+      {:ok, _view2, html} = live(conn, "/#{secret()}/list/2026-08-11")
+      assert html =~ "check target date"
+      assert html =~ ~s(class="item active)
+    end
+
+    test "cancelling the arrow modal closes it without changing the item", %{conn: conn} do
+      date = ~D[2026-08-04]
+      {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "do not move"}])
+      item = List.first(items)
+      {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-04")
+
+      view |> element("button.select-btn[phx-value-id='#{item.id}']") |> render_click()
+      view |> element("button[phx-click='arrow_selected']") |> render_click()
+      html = view |> element("button[phx-click='cancel_arrow']") |> render_click()
+
+      refute html =~ "Arrow forward to date"
+      assert html =~ ~s(class="item active)
+    end
+  end
+
+  describe "search" do
+    test "add item, open search, type query, see result, click result, verify navigation and highlight",
+         %{conn: conn} do
+      # Create an item on a specific date
+      date = ~D[2026-06-20]
+      {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "unique searchable item xyz"}])
+      item = List.first(items)
+
+      # Start on today's date (not the item's date)
+      {:ok, view, html} = live(conn, "/#{secret()}/list")
+      refute html =~ "search-highlight"
+
+      # Open the search modal
+      html = view |> element("button.search-btn") |> render_click()
+      assert html =~ "Search"
+
+      # Type a query — phx-change fires the "search" event
+      html =
+        view |> element(".search-modal form") |> render_change(%{"query" => "unique searchable"})
+
+      assert html =~ "unique searchable item xyz"
+      assert html =~ "2026-06-20"
+
+      # Click the result — should navigate to the item's date
+      html =
+        view |> element(".search-result-item", "unique searchable item xyz") |> render_click()
+
+      assert html =~ "June 20, 2026"
+
+      # The highlighted item should have the search-highlight class
+      assert html =~ "search-highlight"
+      assert html =~ ~s(data-id="#{item.id}")
+    end
+  end
 end

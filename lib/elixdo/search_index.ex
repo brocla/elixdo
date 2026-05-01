@@ -14,17 +14,18 @@ defmodule Elixdo.SearchIndex do
   end
 
   def init(_) do
-    table = :ets.new(:search_index, [:set, :protected, :named_table,
-                                      read_concurrency: true])
+    table = :ets.new(:search_index, [:set, :protected, :named_table, read_concurrency: true])
     send(self(), :rebuild)
     {:ok, %{table: table, ready: false}}
   end
 
   def handle_info(:rebuild, state) do
     items = Repo.all(from i in ListItem, select: {i.id, i.date, i.body})
+
     Enum.each(items, fn {id, date, body} ->
       :ets.insert(:search_index, {id, date, String.downcase(body)})
     end)
+
     {:noreply, %{state | ready: true}}
   end
 
@@ -34,16 +35,22 @@ defmodule Elixdo.SearchIndex do
   end
 
   def handle_call({:search, query}, _from, %{ready: false} = state) do
-    results = Repo.all(from i in ListItem,
-      where: like(i.body, ^"%#{query}%"),
-      select: {i.id, i.date, i.body})
+    results =
+      Repo.all(
+        from i in ListItem,
+          where: like(i.body, ^"%#{query}%"),
+          select: {i.id, i.date, i.body}
+      )
+
     {:reply, results, state}
   end
 
   def handle_call({:search, query}, _from, %{ready: true} = state) do
-    results = :ets.tab2list(:search_index)
+    results =
+      :ets.tab2list(:search_index)
       |> Enum.filter(fn {_id, _date, body} -> String.contains?(body, query) end)
       |> Enum.map(fn {id, date, body} -> {id, date, body} end)
+
     {:reply, results, state}
   end
 end

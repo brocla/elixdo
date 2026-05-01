@@ -28,10 +28,15 @@ import Swipe from "./swipe"
 import AddItem from "./add_item"
 import DragSort from "./drag_sort"
 
+const SearchFocus = {
+  mounted() { this.el.focus() }
+}
+
 let Hooks = {...colocatedHooks}
 Hooks.Swipe = Swipe
 Hooks.AddItem = AddItem
 Hooks.DragSort = DragSort
+Hooks.SearchFocus = SearchFocus
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {

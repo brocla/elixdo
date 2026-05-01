@@ -1,5 +1,6 @@
 defmodule Elixdo.SearchIndexTest do
-  use Elixdo.DataCase, async: false  # ETS named table, cannot be async
+  # ETS named table, cannot be async
+  use Elixdo.DataCase, async: false
 
   alias Elixdo.{SearchIndex, Lists}
 
@@ -10,7 +11,7 @@ defmodule Elixdo.SearchIndexTest do
   end
 
   test "returns results after item is inserted" do
-    {:ok, _} = Lists.create_items(~D[2026-05-01], [%{body: "buy groceries"}])
+    {:ok, _} = Lists.create_items(~D[2026-09-01], [%{body: "buy groceries"}])
     # allow async rebuild to settle or use index_item directly
     Process.sleep(50)
     results = SearchIndex.search("groceries")

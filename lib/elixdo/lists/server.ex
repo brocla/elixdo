@@ -3,7 +3,7 @@ defmodule Elixdo.Lists.Server do
   require Logger
 
   @flush_interval_ms Application.compile_env(:elixdo, :list_server_flush_ms, 2_000)
-  @idle_timeout_ms   Application.compile_env(:elixdo, :list_server_idle_ms, 600_000)
+  @idle_timeout_ms Application.compile_env(:elixdo, :list_server_idle_ms, 600_000)
 
   # Use temporary restart so DynamicSupervisor never auto-restarts these;
   # ServerPool handles on-demand restarts via get_or_start.
@@ -19,17 +19,17 @@ defmodule Elixdo.Lists.Server do
   # --- Public API ---
 
   def start_link(opts) do
-    date    = Keyword.fetch!(opts, :date)
+    date = Keyword.fetch!(opts, :date)
     context = Keyword.get(opts, :context, Elixdo.Lists.DB)
-    caller  = Keyword.get(opts, :caller, nil)
+    caller = Keyword.get(opts, :caller, nil)
     GenServer.start_link(__MODULE__, {date, context, caller}, name: via(date))
   end
 
-  def get_items(date),            do: call(date, :get_items)
-  def create_items(date, attrs),  do: call(date, {:create_items, attrs})
+  def get_items(date), do: call(date, :get_items)
+  def create_items(date, attrs), do: call(date, {:create_items, attrs})
   def update_item(date, item, attrs), do: call(date, {:update_item, item, attrs})
   def arrow_item(date, item, to), do: call(date, {:arrow_item, item, to})
-  def reorder_items(date, ids),   do: call(date, {:reorder_items, ids})
+  def reorder_items(date, ids), do: call(date, {:reorder_items, ids})
 
   defp call(date, msg) do
     pid = Elixdo.Lists.ServerPool.get_or_start(date)
@@ -59,6 +59,7 @@ defmodule Elixdo.Lists.Server do
         broadcast(state.date, updated)
         schedule_flush()
         {:reply, result, %{state | items: updated, dirty: true}, {:continue, :reset_idle}}
+
       error ->
         {:reply, error, state}
     end
@@ -67,12 +68,16 @@ defmodule Elixdo.Lists.Server do
   def handle_call({:update_item, item, attrs}, _from, state) do
     case state.context.update_item(item, attrs) do
       {:ok, updated_item} = result ->
-        items = Enum.map(state.items, fn i ->
-          if i.id == updated_item.id, do: updated_item, else: i
-        end)
+        items =
+          Enum.map(state.items, fn i ->
+            if i.id == updated_item.id, do: updated_item, else: i
+          end)
+
+        Elixdo.SearchIndex.index_item(updated_item)
         broadcast(state.date, items)
         schedule_flush()
         {:reply, result, %{state | items: items, dirty: true}, {:continue, :reset_idle}}
+
       error ->
         {:reply, error, state}
     end
@@ -81,13 +86,16 @@ defmodule Elixdo.Lists.Server do
   def handle_call({:arrow_item, item, to_date}, _from, state) do
     case state.context.arrow_item(item, to_date) do
       {:ok, original, copy} = result ->
-        items = Enum.map(state.items, fn i ->
-          if i.id == original.id, do: original, else: i
-        end)
+        items =
+          Enum.map(state.items, fn i ->
+            if i.id == original.id, do: original, else: i
+          end)
+
         Elixdo.SearchIndex.index_item(copy)
         broadcast(state.date, items)
         schedule_flush()
         {:reply, result, %{state | items: items, dirty: true}, {:continue, :reset_idle}}
+
       error ->
         {:reply, error, state}
     end
@@ -99,6 +107,7 @@ defmodule Elixdo.Lists.Server do
         broadcast(state.date, reordered)
         schedule_flush()
         {:reply, result, %{state | items: reordered, dirty: true}, {:continue, :reset_idle}}
+
       error ->
         {:reply, error, state}
     end
@@ -113,6 +122,7 @@ defmodule Elixdo.Lists.Server do
   end
 
   def handle_info(:flush, %{dirty: false} = state), do: {:noreply, state}
+
   def handle_info(:flush, state) do
     # State is already persisted via DB context calls — dirty flag just tracks
     # whether we need to broadcast. In this implementation DB writes happen
@@ -129,11 +139,13 @@ defmodule Elixdo.Lists.Server do
     if state.dirty do
       Logger.debug("Lists.Server flushing on terminate for #{state.date}")
     end
+
     :ok
   end
 
   if Mix.env() == :test do
     defp maybe_allow_sandbox(nil), do: :ok
+
     defp maybe_allow_sandbox(caller) do
       try do
         Ecto.Adapters.SQL.Sandbox.allow(Elixdo.Repo, caller, self())

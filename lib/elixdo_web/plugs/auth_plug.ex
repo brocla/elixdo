@@ -10,6 +10,7 @@ defmodule ElixdoWeb.AuthPlug do
     case conn.path_info do
       [segment | _] when segment == expected ->
         conn
+
       _ ->
         conn
         |> send_resp(404, "Not found")

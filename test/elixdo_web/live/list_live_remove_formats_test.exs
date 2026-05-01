@@ -121,7 +121,7 @@ defmodule ElixdoWeb.ListLiveRemoveFormatsTest do
     assert db_item.italic == false
   end
 
-  test "remove_formats clears formatting on an arrowed_out item without changing its status", %{
+  test "remove_formats on an arrowed_out item restores it to active and clears arrow", %{
     conn: conn
   } do
     date = ~D[2026-07-07]
@@ -134,19 +134,25 @@ defmodule ElixdoWeb.ListLiveRemoveFormatsTest do
     {:ok, _original, _copy} = Elixdo.Lists.arrow_item(item, target_date)
 
     {:ok, view, _} = live(conn, list_path("2026-07-07"))
-    # The item is now arrowed_out on date; select it
     arrowed_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
     assert arrowed_item.status == :arrowed_out
 
     select_item(view, arrowed_item)
     html = click_remove_formats(view)
 
-    # Status must remain arrowed_out
-    assert html =~ ~s(class="item arrowed-out")
+    # Status must now be active, strikethrough and arrow annotation gone
+    assert html =~ ~s(class="item active")
+    refute html =~ ~s(class="item arrowed-out")
     db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
-    assert db_item.status == :arrowed_out
+    assert db_item.status == :active
+    assert db_item.arrowed_to_date == nil
     assert db_item.bold == false
     assert db_item.color == nil
+
+    # Copy on the target date must be untouched
+    copy = Elixdo.Lists.get_items_for_date(target_date) |> Enum.find(&(&1.body == "arrowed formatted"))
+    assert copy != nil
+    assert copy.status == :active
   end
 
   test "remove_formats clears all format fields simultaneously", %{conn: conn} do

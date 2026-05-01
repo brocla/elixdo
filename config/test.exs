@@ -40,5 +40,7 @@ config :phoenix,
 config :elixdo, clock: Elixdo.Clock.Mock
 config :elixdo, ocr: Elixdo.OCR.Mock
 
-config :elixdo, :list_server_idle_ms, 200   # fast idle for tests
-config :elixdo, :list_server_flush_ms, 50   # fast flush for tests
+# fast idle for tests
+config :elixdo, :list_server_idle_ms, 200
+# fast flush for tests
+config :elixdo, :list_server_flush_ms, 50

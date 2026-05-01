@@ -3,15 +3,15 @@ defmodule Elixdo.Repo.Migrations.CreateListItems do
 
   def change do
     create table(:list_items) do
-      add :date,            :date,    null: false
-      add :position,        :integer, null: false
-      add :body,            :text,    null: false
-      add :status,          :string,  null: false, default: "active"
-      add :color,           :string
-      add :bold,            :boolean, null: false, default: false
-      add :italic,          :boolean, null: false, default: false
-      add :highlighted,     :boolean, null: false, default: false
-      add :prefix,          :string
+      add :date, :date, null: false
+      add :position, :integer, null: false
+      add :body, :text, null: false
+      add :status, :string, null: false, default: "active"
+      add :color, :string
+      add :bold, :boolean, null: false, default: false
+      add :italic, :boolean, null: false, default: false
+      add :highlighted, :boolean, null: false, default: false
+      add :prefix, :string
       add :arrowed_to_date, :date
 
       timestamps(type: :utc_datetime)
