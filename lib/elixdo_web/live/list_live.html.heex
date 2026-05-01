@@ -1,3 +1,4 @@
+<div id="live-root">
 <div class="list-container" id="list-live"
      phx-window-keydown="key_nav"
      phx-hook="Swipe">
@@ -100,15 +101,16 @@
 
 </div>
 
-<%= if @arrow_modal do %>
-  <div class="modal-overlay" phx-click="cancel_arrow">
-    <div class="modal" onclick="event.stopPropagation()">
-      <h3>Arrow forward to date</h3>
-      <form phx-submit="confirm_arrow">
-        <input type="date" name="to_date" required autofocus />
-        <button type="submit">Arrow</button>
-        <button type="button" phx-click="cancel_arrow">Cancel</button>
-      </form>
+  <%= if @arrow_modal do %>
+    <div class="modal-overlay" phx-click="cancel_arrow">
+      <div class="modal" onclick="event.stopPropagation()">
+        <h3>Arrow forward to date</h3>
+        <form phx-submit="confirm_arrow">
+          <input type="date" name="to_date" required autofocus />
+          <button type="submit">Arrow</button>
+          <button type="button" phx-click="cancel_arrow">Cancel</button>
+        </form>
+      </div>
     </div>
-  </div>
-<% end %>
+  <% end %>
+</div>
