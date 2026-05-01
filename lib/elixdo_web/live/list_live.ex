@@ -98,11 +98,13 @@ defmodule ElixdoWeb.ListLive do
 
   # Add item
   def handle_event("add_item", %{"body" => body}, socket) do
-    body = String.trim(body)
+    body = body |> String.trim("\n") |> String.trim("\r\n")
     if body != "" do
       Lists.create_items(socket.assigns.date, [%{body: body}])
       items = Lists.get_items_for_date(socket.assigns.date)
-      {:noreply, assign(socket, items: items, selected: MapSet.new())}
+      {:noreply, socket
+        |> assign(items: items, selected: MapSet.new())
+        |> push_event("clear_add_input", %{})}
     else
       {:noreply, socket}
     end
