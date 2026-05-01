@@ -17,9 +17,12 @@
 
       <span class="toolbar-sep">|</span>
 
-      <button type="button" phx-click="set_decoration" phx-value-field="bold" phx-value-setting="true" class="toolbar-btn" title="Bold"><b>B</b></button>
-      <button type="button" phx-click="set_decoration" phx-value-field="italic" phx-value-setting="true" class="toolbar-btn" title="Italic"><i>I</i></button>
-      <button type="button" phx-click="set_decoration" phx-value-field="highlighted" phx-value-setting="true" class="toolbar-btn" title="Highlight">▐</button>
+      <button type="button" phx-click="set_decoration" phx-value-field="bold" phx-value-setting="true" class="toolbar-btn" title="Bold on"><b>B</b></button>
+      <button type="button" phx-click="set_decoration" phx-value-field="bold" phx-value-setting="false" class="toolbar-btn" title="Bold off"><s>B</s></button>
+      <button type="button" phx-click="set_decoration" phx-value-field="italic" phx-value-setting="true" class="toolbar-btn" title="Italic on"><i>I</i></button>
+      <button type="button" phx-click="set_decoration" phx-value-field="italic" phx-value-setting="false" class="toolbar-btn" title="Italic off"><s>I</s></button>
+      <button type="button" phx-click="set_decoration" phx-value-field="highlighted" phx-value-setting="true" class="toolbar-btn" title="Highlight on">▐</button>
+      <button type="button" phx-click="set_decoration" phx-value-field="highlighted" phx-value-setting="false" class="toolbar-btn" title="Highlight off">▌</button>
 
       <span class="toolbar-sep">|</span>
 
@@ -103,7 +106,7 @@
 
   <%= if @arrow_modal do %>
     <div class="modal-overlay" phx-click="cancel_arrow">
-      <div class="modal" onclick="event.stopPropagation()">
+      <div class="elixdo-modal" onclick="event.stopPropagation()">
         <h3>Arrow forward to date</h3>
         <form phx-submit="confirm_arrow">
           <input type="date" name="to_date" required autofocus />

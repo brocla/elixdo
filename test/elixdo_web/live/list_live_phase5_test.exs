@@ -91,7 +91,7 @@ defmodule ElixdoWeb.ListLivePhase5Test do
 
     {:ok, view, _} = live(conn, list_path("2026-05-21"))
     view |> element("[phx-click='toggle_select'][phx-value-id='#{item.id}']") |> render_click()
-    html = view |> element("[phx-click='set_decoration'][phx-value-field='bold']") |> render_click()
+    html = view |> element("[phx-click='set_decoration'][phx-value-field='bold'][phx-value-setting='true']") |> render_click()
     assert html =~ "bold"
   end
 
@@ -115,9 +115,9 @@ defmodule ElixdoWeb.ListLivePhase5Test do
     {:ok, view, _} = live(conn, list_path("2026-05-23"))
     view |> element("[phx-click='toggle_select'][phx-value-id='#{item.id}']") |> render_click()
     html = view |> element("[phx-click='arrow_selected']") |> render_click()
-    assert html =~ "modal"
+    assert html =~ "elixdo-modal"
 
-    html = view |> form(".modal form", %{to_date: target}) |> render_submit()
+    html = view |> form(".elixdo-modal form", %{to_date: target}) |> render_submit()
     assert html =~ ~s(class="item arrowed-out")
     assert html =~ "2026-05-24"
 
@@ -148,7 +148,7 @@ defmodule ElixdoWeb.ListLivePhase5Test do
       view |> element("[phx-click='toggle_select'][phx-value-id='#{item.id}']") |> render_click()
     end)
     view |> element("[phx-click='arrow_selected']") |> render_click()
-    view |> form(".modal form", %{to_date: target}) |> render_submit()
+    view |> form(".elixdo-modal form", %{to_date: target}) |> render_submit()
 
     target_items = Elixdo.Lists.get_items_for_date(~D[2026-05-27])
     assert length(target_items) == 2

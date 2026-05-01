@@ -144,12 +144,12 @@
 .edit-textarea { width: 100%; padding: 0.25rem; border: 1px solid #1E88E5; border-radius: 3px; color: var(--color-base-content); background: var(--color-base-100); }
 .save-btn { padding: 0.2rem 0.6rem; background: #43A047; color: white; border: none; border-radius: 3px; cursor: pointer; }
 .cancel-btn { padding: 0.2rem 0.6rem; background: var(--color-base-200); color: var(--color-base-content); border: 1px solid var(--color-base-300); border-radius: 3px; cursor: pointer; }
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; cursor: pointer; }
-.modal { background: var(--color-base-100); color: var(--color-base-content); padding: 2rem; border-radius: 8px; min-width: 300px; cursor: default; border: 1px solid var(--color-base-300); }
-.modal h3 { margin-top: 0; }
-.modal button { padding: 0.4rem 0.8rem; background: var(--color-base-200); color: var(--color-base-content); border: 1px solid var(--color-base-300); border-radius: 3px; cursor: pointer; margin-right: 0.5rem; }
-.modal button[type="submit"] { background: #1E88E5; color: white; border-color: #1E88E5; }
-.modal input[type="date"] { padding: 0.3rem; border: 1px solid var(--color-base-300); border-radius: 3px; color: var(--color-base-content); background: var(--color-base-100); margin-bottom: 1rem; display: block; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; cursor: pointer; }
+.elixdo-modal { background: var(--color-base-100); color: var(--color-base-content); padding: 2rem; border-radius: 8px; min-width: 300px; cursor: default; border: 1px solid var(--color-base-300); }
+.elixdo-modal h3 { margin-top: 0; }
+.elixdo-modal button { padding: 0.4rem 0.8rem; background: var(--color-base-200); color: var(--color-base-content); border: 1px solid var(--color-base-300); border-radius: 3px; cursor: pointer; margin-right: 0.5rem; }
+.elixdo-modal button[type="submit"] { background: #1E88E5; color: white; border-color: #1E88E5; }
+.elixdo-modal input[type="date"] { padding: 0.3rem; border: 1px solid var(--color-base-300); border-radius: 3px; color: var(--color-base-content); background: var(--color-base-100); margin-bottom: 1rem; display: block; }
 .today-btn { padding: 0.25rem 0.75rem; background: var(--color-base-100); color: var(--color-base-content); border: 1px solid var(--color-base-300); border-radius: 3px; cursor: pointer; }
 .drag-handle { cursor: grab; color: var(--color-base-300); padding: 0 0.4rem; user-select: none; }
 .drag-handle:active { cursor: grabbing; }

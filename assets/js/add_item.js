@@ -8,7 +8,9 @@ const AddItem = {
     });
   },
   updated() {
-    // Auto-focus after submit (LiveView re-renders the element)
+    // After LiveView re-renders (post-submit), clear and focus the textarea.
+    this.el.value = "";
+    this.el.focus();
   }
 };
 
