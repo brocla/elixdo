@@ -1,33 +1,43 @@
 defmodule ElixdoWeb.ListLive do
   use ElixdoWeb, :live_view
 
-  alias Elixdo.{Lists, DateHelper}
+  alias Elixdo.{Lists, DateHelper, Emoji}
 
   @impl true
   def mount(%{"secret" => secret} = params, _session, socket) do
-    date = case params["date"] do
-      nil -> Elixdo.Clock.today()
-      str ->
-        case DateHelper.resolve(str) do
-          {:ok, d} -> d
-          _ -> Elixdo.Clock.today()
-        end
-    end
+    date =
+      case params["date"] do
+        nil ->
+          Elixdo.Clock.today()
+
+        str ->
+          case DateHelper.resolve(str) do
+            {:ok, d} -> d
+            _ -> Elixdo.Clock.today()
+          end
+      end
+
     today = Elixdo.Clock.today()
     items = Lists.get_items_for_date(date)
+
     if connected?(socket) do
       Phoenix.PubSub.subscribe(Elixdo.PubSub, "date:change")
       Phoenix.PubSub.subscribe(Elixdo.PubSub, "list:#{date}")
     end
-    {:ok, socket
-      |> assign(:secret, secret)
-      |> assign(:date, date)
-      |> assign(:today, today)
-      |> assign(:items, items)
-      |> assign(:selected, MapSet.new())
-      |> assign(:editing_id, nil)
-      |> assign(:arrow_modal, false)
-      |> assign(:arrow_item_ids, [])}
+
+    {:ok,
+     socket
+     |> assign(:secret, secret)
+     |> assign(:date, date)
+     |> assign(:today, today)
+     |> assign(:items, items)
+     |> assign(:selected, MapSet.new())
+     |> assign(:editing_id, nil)
+     |> assign(:arrow_modal, false)
+     |> assign(:arrow_item_ids, [])
+     |> assign(:search_open, false)
+     |> assign(:search_results, [])
+     |> assign(:highlighted_item_id, nil)}
   end
 
   @impl true
@@ -35,11 +45,15 @@ defmodule ElixdoWeb.ListLive do
     case DateHelper.resolve(date_str) do
       {:ok, date} ->
         items = Lists.get_items_for_date(date)
+
         if connected?(socket) do
           Phoenix.PubSub.unsubscribe(Elixdo.PubSub, "list:#{socket.assigns.date}")
           Phoenix.PubSub.subscribe(Elixdo.PubSub, "list:#{date}")
         end
-        {:noreply, socket |> assign(:date, date) |> assign(:items, items) |> assign(:selected, MapSet.new())}
+
+        {:noreply,
+         socket |> assign(:date, date) |> assign(:items, items) |> assign(:selected, MapSet.new())}
+
       {:error, _} ->
         {:noreply, socket}
     end
@@ -49,22 +63,35 @@ defmodule ElixdoWeb.ListLive do
 
   @impl true
   def handle_event("prev_day", _, socket) do
-    {:noreply, push_patch(socket, to: date_path(socket, Date.add(socket.assigns.date, -1)))}
+    {:noreply,
+     socket
+     |> assign(:highlighted_item_id, nil)
+     |> push_patch(to: date_path(socket, Date.add(socket.assigns.date, -1)))}
   end
 
   def handle_event("next_day", _, socket) do
-    {:noreply, push_patch(socket, to: date_path(socket, Date.add(socket.assigns.date, 1)))}
+    {:noreply,
+     socket
+     |> assign(:highlighted_item_id, nil)
+     |> push_patch(to: date_path(socket, Date.add(socket.assigns.date, 1)))}
   end
 
   def handle_event("jump_date", %{"date" => date_str}, socket) do
     case DateHelper.resolve(date_str) do
-      {:ok, date} -> {:noreply, push_patch(socket, to: date_path(socket, date))}
-      {:error, _} -> {:noreply, socket}
+      {:ok, date} ->
+        {:noreply,
+         socket |> assign(:highlighted_item_id, nil) |> push_patch(to: date_path(socket, date))}
+
+      {:error, _} ->
+        {:noreply, socket}
     end
   end
 
   def handle_event("go_today", _, socket) do
-    {:noreply, push_patch(socket, to: date_path(socket, Elixdo.Clock.today()))}
+    {:noreply,
+     socket
+     |> assign(:highlighted_item_id, nil)
+     |> push_patch(to: date_path(socket, Elixdo.Clock.today()))}
   end
 
   def handle_event("key_nav", %{"key" => "ArrowLeft"}, socket) do
@@ -81,10 +108,13 @@ defmodule ElixdoWeb.ListLive do
   def handle_event("toggle_select", %{"id" => id}, socket) do
     id = String.to_integer(id)
     selected = socket.assigns.selected
-    selected = if MapSet.member?(selected, id),
-      do: MapSet.delete(selected, id),
-      else: MapSet.put(selected, id)
-    {:noreply, assign(socket, :selected, selected)}
+
+    selected =
+      if MapSet.member?(selected, id),
+        do: MapSet.delete(selected, id),
+        else: MapSet.put(selected, id)
+
+    {:noreply, socket |> assign(:selected, selected) |> assign(:highlighted_item_id, nil)}
   end
 
   def handle_event("select_all", _, socket) do
@@ -98,13 +128,16 @@ defmodule ElixdoWeb.ListLive do
 
   # Add item
   def handle_event("add_item", %{"body" => body}, socket) do
-    body = String.trim(body)
+    body = body |> String.trim() |> Emoji.convert()
+
     if body != "" do
       Lists.create_items(socket.assigns.date, [%{body: body}])
       items = Lists.get_items_for_date(socket.assigns.date)
-      {:noreply, socket
-        |> assign(items: items, selected: MapSet.new())
-        |> push_event("clear_add_input", %{})}
+
+      {:noreply,
+       socket
+       |> assign(items: items, selected: MapSet.new())
+       |> push_event("clear_add_input", %{})}
     else
       {:noreply, socket}
     end
@@ -112,14 +145,16 @@ defmodule ElixdoWeb.ListLive do
 
   # Inline edit
   def handle_event("start_edit", %{"id" => id}, socket) do
-    {:noreply, assign(socket, :editing_id, String.to_integer(id))}
+    {:noreply,
+     socket |> assign(:editing_id, String.to_integer(id)) |> assign(:highlighted_item_id, nil)}
   end
 
   def handle_event("save_edit", %{"_id" => id, "body" => body}, socket) do
     id = String.to_integer(id)
-    body = String.trim(body)
+    body = body |> String.trim() |> Emoji.convert()
+
     if body != "" do
-      item = Enum.find(socket.assigns.items, & &1.id == id)
+      item = Enum.find(socket.assigns.items, &(&1.id == id))
       if item, do: Lists.update_item(item, %{body: body})
       items = Lists.get_items_for_date(socket.assigns.date)
       {:noreply, assign(socket, items: items, editing_id: nil)}
@@ -135,28 +170,57 @@ defmodule ElixdoWeb.ListLive do
   # Toolbar status actions (apply to all selected)
   def handle_event("set_status", %{"status" => status_str}, socket) do
     status = String.to_existing_atom(status_str)
-    selected_items = Enum.filter(socket.assigns.items, & MapSet.member?(socket.assigns.selected, &1.id))
+
+    selected_items =
+      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+
     Enum.each(selected_items, fn item ->
       Lists.update_item(item, %{status: status})
     end)
+
     items = Lists.get_items_for_date(socket.assigns.date)
     {:noreply, assign(socket, :items, items)}
   end
 
   # Toolbar decoration actions
   def handle_event("set_decoration", %{"field" => field, "setting" => setting}, socket) do
-    selected_items = Enum.filter(socket.assigns.items, & MapSet.member?(socket.assigns.selected, &1.id))
-    attrs = case field do
-      "bold"        -> %{bold: setting == "true"}
-      "italic"      -> %{italic: setting == "true"}
-      "highlighted" -> %{highlighted: setting == "true"}
-      "color"       -> %{color: if(setting == "", do: nil, else: String.to_existing_atom(setting))}
-      "prefix"      -> %{prefix: if(setting == "", do: nil, else: setting)}
-      _             -> %{}
-    end
+    selected_items =
+      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+
+    attrs =
+      case field do
+        "bold" -> %{bold: setting == "true"}
+        "italic" -> %{italic: setting == "true"}
+        "highlighted" -> %{highlighted: setting == "true"}
+        "color" -> %{color: if(setting == "", do: nil, else: String.to_existing_atom(setting))}
+        "prefix" -> %{prefix: if(setting == "", do: nil, else: setting)}
+        _ -> %{}
+      end
+
     Enum.each(selected_items, fn item ->
       Lists.update_item(item, attrs)
     end)
+
+    items = Lists.get_items_for_date(socket.assigns.date)
+    {:noreply, assign(socket, :items, items)}
+  end
+
+  # Remove all formats + restore active status (except arrowed_out, which cannot transition)
+  def handle_event("remove_formats", _, socket) do
+    selected_items =
+      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+
+    Enum.each(selected_items, fn item ->
+      base_attrs = %{bold: false, italic: false, highlighted: false, color: nil}
+
+      attrs =
+        if item.status == :arrowed_out,
+          do: base_attrs,
+          else: Map.put(base_attrs, :status, :active)
+
+      Lists.update_item(item, attrs)
+    end)
+
     items = Lists.get_items_for_date(socket.assigns.date)
     {:noreply, assign(socket, :items, items)}
   end
@@ -164,6 +228,7 @@ defmodule ElixdoWeb.ListLive do
   # Arrow-out flow
   def handle_event("arrow_selected", _, socket) do
     selected_ids = MapSet.to_list(socket.assigns.selected)
+
     if selected_ids != [] do
       {:noreply, assign(socket, arrow_modal: true, arrow_item_ids: selected_ids)}
     else
@@ -175,13 +240,23 @@ defmodule ElixdoWeb.ListLive do
     case Elixdo.DateHelper.resolve(to_date_str) do
       {:ok, to_date} ->
         Enum.each(socket.assigns.arrow_item_ids, fn id ->
-          item = Enum.find(socket.assigns.items, & &1.id == id)
+          item = Enum.find(socket.assigns.items, &(&1.id == id))
+
           if item && item.status == :active do
             Lists.arrow_item(item, to_date)
           end
         end)
+
         items = Lists.get_items_for_date(socket.assigns.date)
-        {:noreply, assign(socket, items: items, arrow_modal: false, arrow_item_ids: [], selected: MapSet.new())}
+
+        {:noreply,
+         assign(socket,
+           items: items,
+           arrow_modal: false,
+           arrow_item_ids: [],
+           selected: MapSet.new()
+         )}
+
       {:error, _} ->
         {:noreply, socket}
     end
@@ -193,10 +268,43 @@ defmodule ElixdoWeb.ListLive do
 
   def handle_event("reorder", %{"order" => ids}, socket) do
     int_ids = Enum.map(ids, &String.to_integer(to_string(&1)))
+
     case Lists.reorder_items(socket.assigns.date, int_ids) do
       {:ok, items} -> {:noreply, assign(socket, :items, items)}
-      {:error, _}  -> {:noreply, socket}
+      {:error, _} -> {:noreply, socket}
     end
+  end
+
+  # Search
+  def handle_event("open_search", _, socket) do
+    {:noreply, assign(socket, search_open: true, search_results: [])}
+  end
+
+  def handle_event("close_search", _, socket) do
+    {:noreply, assign(socket, search_open: false)}
+  end
+
+  def handle_event("search", %{"query" => q}, socket) do
+    results =
+      if String.trim(q) == "" do
+        []
+      else
+        Elixdo.SearchIndex.search(q)
+        |> Enum.map(fn {id, date, body} -> %{id: id, date: date, body: body} end)
+      end
+
+    {:noreply, assign(socket, search_results: results, search_open: true)}
+  end
+
+  def handle_event("goto_result", %{"id" => id, "date" => date_str}, socket) do
+    item_id = String.to_integer(id)
+
+    socket =
+      socket
+      |> assign(search_open: false, highlighted_item_id: item_id)
+      |> push_patch(to: date_path(socket, Date.from_iso8601!(date_str)))
+
+    {:noreply, socket}
   end
 
   @impl true
@@ -217,25 +325,27 @@ defmodule ElixdoWeb.ListLive do
     ~p"/#{secret}/list/#{Date.to_iso8601(date)}"
   end
 
-  defp item_class(%{status: :completed}),   do: "completed"
+  defp item_class(%{status: :completed}), do: "completed"
   defp item_class(%{status: :wiggled_out}), do: "wiggled-out"
   defp item_class(%{status: :arrowed_out}), do: "arrowed-out"
-  defp item_class(_),                        do: "active"
+  defp item_class(_), do: "active"
 
   defp item_classes(item) do
     [
       item_class(item),
-      (if item.bold,        do: "bold",        else: nil),
-      (if item.italic,      do: "italic",      else: nil),
-      (if item.highlighted, do: "highlighted", else: nil),
+      if(item.bold, do: "bold", else: nil),
+      if(item.italic, do: "italic", else: nil),
+      if(item.highlighted, do: "highlighted", else: nil),
       color_class(item.color)
-    ] |> Enum.reject(&is_nil/1) |> Enum.join(" ")
+    ]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(" ")
   end
 
-  defp color_class(nil),     do: nil
-  defp color_class(:red),    do: "color-red"
-  defp color_class(:blue),   do: "color-blue"
-  defp color_class(:green),  do: "color-green"
+  defp color_class(nil), do: nil
+  defp color_class(:red), do: "color-red"
+  defp color_class(:blue), do: "color-blue"
+  defp color_class(:green), do: "color-green"
   defp color_class(:purple), do: "color-purple"
   defp color_class(:orange), do: "color-orange"
 end

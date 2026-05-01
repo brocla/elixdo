@@ -31,11 +31,13 @@ defmodule Elixdo.ListsTest do
     end
 
     test "returns items ordered by position" do
-      {:ok, items} = Lists.create_items(@date, [
-        %{body: "first"},
-        %{body: "second"},
-        %{body: "third"}
-      ])
+      {:ok, items} =
+        Lists.create_items(@date, [
+          %{body: "first"},
+          %{body: "second"},
+          %{body: "third"}
+        ])
+
       positions = Enum.map(items, & &1.position)
       assert positions == Enum.sort(positions)
     end
@@ -61,8 +63,8 @@ defmodule Elixdo.ListsTest do
       active_results = Lists.get_items_for_range(@date, @date, [:active])
       completed_results = Lists.get_items_for_range(@date, @date, [:completed])
 
-      assert Enum.any?(active_results, & &1.id == item.id) == false
-      assert Enum.any?(completed_results, & &1.id == completed.id)
+      assert Enum.any?(active_results, &(&1.id == item.id)) == false
+      assert Enum.any?(completed_results, &(&1.id == completed.id))
     end
 
     test "returns all statuses when no filter" do
@@ -83,11 +85,13 @@ defmodule Elixdo.ListsTest do
     end
 
     test "creates multiple items atomically" do
-      assert {:ok, items} = Lists.create_items(@date, [
-        %{body: "item 1"},
-        %{body: "item 2"},
-        %{body: "item 3"}
-      ])
+      assert {:ok, items} =
+               Lists.create_items(@date, [
+                 %{body: "item 1"},
+                 %{body: "item 2"},
+                 %{body: "item 3"}
+               ])
+
       assert length(items) == 3
       positions = Enum.map(items, & &1.position)
       assert positions == [1, 2, 3]
@@ -143,15 +147,18 @@ defmodule Elixdo.ListsTest do
       assert reactivated.status == :active
     end
 
-    test "forbids invalid transition active -> active" do
-      item = insert_item()
-      assert {:error, :forbidden_transition} = Lists.update_item(item, %{status: :active})
+    test "allows same-status no-op active -> active (so format fields can be cleared)" do
+      item = insert_item(%{bold: true})
+      assert {:ok, updated} = Lists.update_item(item, %{status: :active, bold: false})
+      assert updated.status == :active
+      assert updated.bold == false
     end
 
     test "forbids invalid transition completed -> completed" do
       item = insert_item()
       {:ok, completed} = Lists.update_item(item, %{status: :completed})
-      assert {:error, :forbidden_transition} = Lists.update_item(completed, %{status: :completed})
+      assert {:ok, updated} = Lists.update_item(completed, %{status: :completed, bold: false})
+      assert updated.status == :completed
     end
 
     test "forbids arrowed_out -> anything" do
@@ -179,12 +186,16 @@ defmodule Elixdo.ListsTest do
     end
 
     test "preserves item formatting on copy" do
-      {:ok, [item]} = Lists.create_items(@date, [%{
-        body: "formatted",
-        bold: true,
-        italic: true,
-        highlighted: true
-      }])
+      {:ok, [item]} =
+        Lists.create_items(@date, [
+          %{
+            body: "formatted",
+            bold: true,
+            italic: true,
+            highlighted: true
+          }
+        ])
+
       assert {:ok, _original, copy} = Lists.arrow_item(item, @date2)
       assert copy.bold == true
       assert copy.italic == true
@@ -206,9 +217,13 @@ defmodule Elixdo.ListsTest do
 
   describe "reorder_items/2" do
     test "reorders items by given id list" do
-      {:ok, [a, b, c]} = Lists.create_items(@date, [
-        %{body: "a"}, %{body: "b"}, %{body: "c"}
-      ])
+      {:ok, [a, b, c]} =
+        Lists.create_items(@date, [
+          %{body: "a"},
+          %{body: "b"},
+          %{body: "c"}
+        ])
+
       assert {:ok, reordered} = Lists.reorder_items(@date, [c.id, a.id, b.id])
       [first, second, third] = reordered
       assert first.id == c.id
