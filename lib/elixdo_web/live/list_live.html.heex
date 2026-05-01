@@ -82,13 +82,7 @@
           </form>
         <% else %>
           <span class={"item-body #{item_classes(item)}"}
-                phx-click="start_edit" phx-value-id={item.id}>
-            <%= if item.prefix do %><span class="prefix"><%= item.prefix %></span><% end %>
-            <%= item.body %>
-            <%= if item.status == :arrowed_out && item.arrowed_to_date do %>
-              <span class="arrow-annotation"> → <%= item.arrowed_to_date %></span>
-            <% end %>
-          </span>
+                phx-click="start_edit" phx-value-id={item.id}><%= if item.prefix do %><span class="prefix"><%= item.prefix %></span> <% end %><%= item.body %><%= if item.status == :arrowed_out && item.arrowed_to_date do %><span class="arrow-annotation"> → <%= item.arrowed_to_date %></span><% end %></span>
         <% end %>
       </li>
     <% end %>

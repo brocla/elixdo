@@ -98,7 +98,7 @@ defmodule ElixdoWeb.ListLive do
 
   # Add item
   def handle_event("add_item", %{"body" => body}, socket) do
-    body = body |> String.trim("\n") |> String.trim("\r\n")
+    body = String.trim(body)
     if body != "" do
       Lists.create_items(socket.assigns.date, [%{body: body}])
       items = Lists.get_items_for_date(socket.assigns.date)
