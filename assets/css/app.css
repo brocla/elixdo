@@ -151,3 +151,6 @@
 .modal button[type="submit"] { background: #1E88E5; color: white; border-color: #1E88E5; }
 .modal input[type="date"] { padding: 0.3rem; border: 1px solid var(--color-base-300); border-radius: 3px; color: var(--color-base-content); background: var(--color-base-100); margin-bottom: 1rem; display: block; }
 .today-btn { padding: 0.25rem 0.75rem; background: var(--color-base-100); color: var(--color-base-content); border: 1px solid var(--color-base-300); border-radius: 3px; cursor: pointer; }
+.drag-handle { cursor: grab; color: var(--color-base-300); padding: 0 0.4rem; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
+.drag-ghost { opacity: 0.4; }

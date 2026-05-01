@@ -26,10 +26,12 @@ import {hooks as colocatedHooks} from "phoenix-colocated/elixdo"
 import topbar from "../vendor/topbar"
 import Swipe from "./swipe"
 import AddItem from "./add_item"
+import DragSort from "./drag_sort"
 
 let Hooks = {...colocatedHooks}
 Hooks.Swipe = Swipe
 Hooks.AddItem = AddItem
+Hooks.DragSort = DragSort
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {

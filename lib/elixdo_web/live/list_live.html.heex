@@ -60,9 +60,10 @@
     <button type="button" phx-click="next_day" class="nav-arrow nav-right">→</button>
   </div>
 
-  <ul class="items-list">
+  <ul class="items-list" id="items-list" phx-hook="DragSort">
     <%= for item <- @items do %>
-      <li class={"item #{item_class(item)}"}>
+      <li class={"item #{item_class(item)}"} data-id={item.id}>
+        <span class="drag-handle">⠿</span>
         <button type="button" phx-click="toggle_select" phx-value-id={item.id}
                 class={"select-btn #{if MapSet.member?(@selected, item.id), do: "selected", else: ""}"}>
           <%= if MapSet.member?(@selected, item.id), do: "●", else: "○" %>

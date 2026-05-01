@@ -189,6 +189,14 @@ defmodule ElixdoWeb.ListLive do
     {:noreply, assign(socket, arrow_modal: false, arrow_item_ids: [])}
   end
 
+  def handle_event("reorder", %{"order" => ids}, socket) do
+    int_ids = Enum.map(ids, &String.to_integer(to_string(&1)))
+    case Lists.reorder_items(socket.assigns.date, int_ids) do
+      {:ok, items} -> {:noreply, assign(socket, :items, items)}
+      {:error, _}  -> {:noreply, socket}
+    end
+  end
+
   @impl true
   def handle_info({:new_day, new_date}, socket) do
     {:noreply, assign(socket, :today, new_date)}
