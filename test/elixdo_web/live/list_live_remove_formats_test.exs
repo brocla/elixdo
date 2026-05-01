@@ -1,0 +1,176 @@
+defmodule ElixdoWeb.ListLiveRemoveFormatsTest do
+  use ElixdoWeb.ConnCase, async: false
+  import Phoenix.LiveViewTest
+  import Mox
+
+  setup :verify_on_exit!
+
+  setup do
+    Mox.stub(Elixdo.Clock.Mock, :today, fn -> ~D[2026-07-01] end)
+    :ok
+  end
+
+  defp secret, do: System.get_env("SECRET_PATH", "dev-secret")
+  defp list_path(date), do: "/#{secret()}/list/#{date}"
+
+  defp select_item(view, item) do
+    view
+    |> element("[phx-click='toggle_select'][phx-value-id='#{item.id}']")
+    |> render_click()
+  end
+
+  defp click_remove_formats(view) do
+    view |> element("[phx-click='remove_formats']") |> render_click()
+  end
+
+  test "remove_formats clears bold on an active item", %{conn: conn} do
+    date = ~D[2026-07-01]
+    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "bold item"}])
+    item = List.first(items)
+    {:ok, _} = Elixdo.Lists.update_item(item, %{bold: true})
+    refreshed = item |> Map.put(:bold, true)
+
+    {:ok, view, _} = live(conn, list_path("2026-07-01"))
+    select_item(view, refreshed)
+    html = click_remove_formats(view)
+
+    refute html =~ ~r/data-id="#{item.id}"[^>]*bold/
+    db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert db_item.bold == false
+  end
+
+  test "remove_formats clears italic on an active item", %{conn: conn} do
+    date = ~D[2026-07-02]
+    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "italic item"}])
+    item = List.first(items)
+    {:ok, _} = Elixdo.Lists.update_item(item, %{italic: true})
+
+    {:ok, view, _} = live(conn, list_path("2026-07-02"))
+    select_item(view, item)
+    click_remove_formats(view)
+
+    db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert db_item.italic == false
+  end
+
+  test "remove_formats clears highlighted on an active item", %{conn: conn} do
+    date = ~D[2026-07-03]
+    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "highlighted item"}])
+    item = List.first(items)
+    {:ok, _} = Elixdo.Lists.update_item(item, %{highlighted: true})
+
+    {:ok, view, _} = live(conn, list_path("2026-07-03"))
+    select_item(view, item)
+    click_remove_formats(view)
+
+    db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert db_item.highlighted == false
+  end
+
+  test "remove_formats clears color on an active item", %{conn: conn} do
+    date = ~D[2026-07-04]
+    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "colored item"}])
+    item = List.first(items)
+    {:ok, _} = Elixdo.Lists.update_item(item, %{color: :red})
+
+    {:ok, view, _} = live(conn, list_path("2026-07-04"))
+    select_item(view, item)
+    html = click_remove_formats(view)
+
+    refute html =~ "color-red"
+    db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert db_item.color == nil
+  end
+
+  test "remove_formats clears formatting on a completed item and restores active status", %{
+    conn: conn
+  } do
+    date = ~D[2026-07-05]
+    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "completed formatted"}])
+    item = List.first(items)
+    {:ok, completed} = Elixdo.Lists.update_item(item, %{status: :completed})
+    {:ok, _} = Elixdo.Lists.update_item(completed, %{bold: true, color: :blue})
+
+    {:ok, view, _} = live(conn, list_path("2026-07-05"))
+    select_item(view, item)
+    html = click_remove_formats(view)
+
+    assert html =~ ~s(class="item active")
+    db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert db_item.status == :active
+    assert db_item.bold == false
+    assert db_item.color == nil
+  end
+
+  test "remove_formats clears formatting on a wiggled_out item and restores active status", %{
+    conn: conn
+  } do
+    date = ~D[2026-07-06]
+    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "wiggled formatted"}])
+    item = List.first(items)
+    {:ok, wiggled} = Elixdo.Lists.update_item(item, %{status: :wiggled_out})
+    {:ok, _} = Elixdo.Lists.update_item(wiggled, %{italic: true})
+
+    {:ok, view, _} = live(conn, list_path("2026-07-06"))
+    select_item(view, item)
+    html = click_remove_formats(view)
+
+    assert html =~ ~s(class="item active")
+    db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert db_item.status == :active
+    assert db_item.italic == false
+  end
+
+  test "remove_formats clears formatting on an arrowed_out item without changing its status", %{
+    conn: conn
+  } do
+    date = ~D[2026-07-07]
+    target_date = ~D[2026-07-08]
+
+    {:ok, items} =
+      Elixdo.Lists.create_items(date, [%{body: "arrowed formatted", bold: true, color: :green}])
+
+    item = List.first(items)
+    {:ok, _original, _copy} = Elixdo.Lists.arrow_item(item, target_date)
+
+    {:ok, view, _} = live(conn, list_path("2026-07-07"))
+    # The item is now arrowed_out on date; select it
+    arrowed_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert arrowed_item.status == :arrowed_out
+
+    select_item(view, arrowed_item)
+    html = click_remove_formats(view)
+
+    # Status must remain arrowed_out
+    assert html =~ ~s(class="item arrowed-out")
+    db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert db_item.status == :arrowed_out
+    assert db_item.bold == false
+    assert db_item.color == nil
+  end
+
+  test "remove_formats clears all format fields simultaneously", %{conn: conn} do
+    date = ~D[2026-07-09]
+    {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "all formats"}])
+    item = List.first(items)
+
+    {:ok, _} =
+      Elixdo.Lists.update_item(item, %{
+        bold: true,
+        italic: true,
+        highlighted: true,
+        color: :purple
+      })
+
+    {:ok, view, _} = live(conn, list_path("2026-07-09"))
+    select_item(view, item)
+    click_remove_formats(view)
+
+    db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert db_item.bold == false
+    assert db_item.italic == false
+    assert db_item.highlighted == false
+    assert db_item.color == nil
+    assert db_item.status == :active
+  end
+end

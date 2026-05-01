@@ -105,10 +105,10 @@
 /* This file is for your main application CSS */
 
 .item { padding: 0.5rem; margin: 0.25rem 0; list-style: none; display: flex; align-items: flex-start; }
-.item.completed .item-body { text-decoration: line-through; }
-.item.wiggled-out .item-body { text-decoration: line-through wavy; }
-.item.arrowed-out .item-body { text-decoration: line-through; }
-.item.arrowed-out .item-body::after { content: " →"; text-decoration: none; }
+.item.completed .item-text { text-decoration: line-through; }
+.item.wiggled-out .item-text { text-decoration: line-through wavy; }
+.item.arrowed-out .item-text { text-decoration: line-through; }
+.arrow-annotation { text-decoration: none; font-size: 0.85em; margin-left: 0.25em; vertical-align: middle; }
 .item-body { white-space: pre-wrap; word-break: break-word; flex: 1; }
 .item-body.bold { font-weight: bold; }
 .item-body.italic { font-style: italic; }
@@ -155,6 +155,23 @@
 .drag-handle { cursor: grab; color: var(--color-base-300); padding: 0 0.4rem; user-select: none; }
 .drag-handle:active { cursor: grabbing; }
 .drag-ghost { opacity: 0.4; }
+.search-highlight { outline: 2px solid #1E88E5; background: rgba(30,136,229,0.1); border-radius: 3px; transition: all 0.3s; }
+.search-input { width: 100%; padding: 0.5rem; border: 1px solid var(--color-base-300); border-radius: 4px; color: var(--color-base-content); background: var(--color-base-100); margin-bottom: 1rem; font-size: 1rem; }
+.search-results { list-style: none; padding: 0; margin: 0 0 1rem 0; max-height: 300px; overflow-y: auto; }
+.search-result-item { padding: 0.5rem; border-bottom: 1px solid var(--color-base-300); cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.search-result-item:hover { background: var(--color-base-200); }
+.search-result-body { flex: 1; white-space: pre-wrap; word-break: break-word; }
+.search-result-date { font-size: 0.85rem; color: var(--color-base-content); opacity: 0.65; white-space: nowrap; }
+.search-no-results { padding: 0.5rem; color: var(--color-base-content); opacity: 0.5; font-style: italic; }
+.search-close-btn { padding: 0.4rem 0.8rem; background: var(--color-base-200); color: var(--color-base-content); border: 1px solid var(--color-base-300); border-radius: 3px; cursor: pointer; }
+.search-modal { min-width: 400px; max-width: 600px; }
+
+/* ── Desktop / fine-pointer overrides ───────────────────────────────────
+   (pointer: fine) matches desktop browsers with a mouse; excludes touch.
+   ─────────────────────────────────────────────────────────────────────── */
+@media (pointer: fine) {
+  .nav-arrow { font-size: 3rem; padding: 1rem 2rem; }
+}
 
 /* ── Mobile / touch device overrides ────────────────────────────────────
    (pointer: coarse) matches phones and tablets but not desktop browsers.
