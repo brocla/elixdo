@@ -102,9 +102,9 @@
       <button type="button" phx-click="prev_day" class="nav-arrow nav-left">⟨</button>
       <div class="date-display">
         <label for="date-picker">{Calendar.strftime(@date, "%A, %B %-d, %Y")}</label>
-        <%# Custom styled date picker: hidden native input overlaid on visible button %>
+        <%# Custom styled date picker: button triggers showPicker() on hidden input %>
         <div class="date-picker-wrap">
-          <div class="date-picker-btn">
+          <button type="button" class="date-picker-btn" onclick="document.getElementById('date-picker').showPicker()">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <rect x="1" y="2" width="12" height="11" rx="2"/>
               <line x1="1" y1="6" x2="13" y2="6"/>
@@ -112,16 +112,16 @@
               <line x1="10" y1="1" x2="10" y2="4"/>
             </svg>
             {Date.to_iso8601(@date)}
-            <form phx-change="jump_date" id="date-picker-form">
-              <input
-                type="date"
-                id="date-picker"
-                value={Date.to_iso8601(@date)}
-                name="date"
-                class="date-picker-input"
-              />
-            </form>
-          </div>
+          </button>
+          <form phx-change="jump_date" id="date-picker-form">
+            <input
+              type="date"
+              id="date-picker"
+              value={Date.to_iso8601(@date)}
+              name="date"
+              class="date-picker-input"
+            />
+          </form>
         </div>
       </div>
       <button type="button" phx-click="next_day" class="nav-arrow nav-right">⟩</button>

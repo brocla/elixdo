@@ -104,9 +104,6 @@ defmodule Elixdo.Lists.DB do
       {:ok, %{original: original, copy: [copy]}} ->
         {:ok, original, copy}
 
-      {:ok, %{original: original, copy: copy}} when is_list(copy) ->
-        {:ok, original, List.first(copy)}
-
       {:error, _, reason, _} ->
         {:error, reason}
     end
@@ -120,10 +117,12 @@ defmodule Elixdo.Lists.DB do
     given_ids = MapSet.new(ordered_ids)
 
     if MapSet.equal?(existing_ids, given_ids) do
+      existing_by_id = Map.new(existing, &{&1.id, &1})
+
       ordered_ids
       |> Enum.with_index(1)
       |> Enum.reduce(Ecto.Multi.new(), fn {id, pos}, multi ->
-        item = Enum.find(existing, &(&1.id == id))
+        item = Map.fetch!(existing_by_id, id)
         Ecto.Multi.update(multi, {:pos, id}, ListItem.changeset(item, %{position: pos}))
       end)
       |> Repo.transaction()

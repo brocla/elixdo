@@ -20,6 +20,11 @@ defmodule ElixdoWeb.Router do
     plug ElixdoWeb.ApiAuthPlug
   end
 
+  scope "/" do
+    pipe_through :api
+    get "/manifest.json", ElixdoWeb.ManifestController, :show
+  end
+
   scope "/api/v1", ElixdoWeb.Api do
     pipe_through :api_auth
 

@@ -1,7 +1,14 @@
+# To find more emoji to add to this file:
+#   emojipedia.org — search by name, copy the character
+#   On Windows: Win + . opens the emoji picker
+#   On Mac: Cmd + Ctrl + Space
+
+
 defmodule Elixdo.Emoji do
   @moduledoc "Converts :shortcode: patterns to emoji characters."
 
   @map %{
+    "church" => "⛪",
     "thumbsup" => "👍",
     "thumbsdown" => "👎",
     "+1" => "👍",

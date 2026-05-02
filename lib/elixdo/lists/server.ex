@@ -2,7 +2,6 @@ defmodule Elixdo.Lists.Server do
   use GenServer
   require Logger
 
-  @flush_interval_ms Application.compile_env(:elixdo, :list_server_flush_ms, 2_000)
   @idle_timeout_ms Application.compile_env(:elixdo, :list_server_idle_ms, 600_000)
 
   # Use temporary restart so DynamicSupervisor never auto-restarts these;
@@ -43,8 +42,7 @@ defmodule Elixdo.Lists.Server do
   def init({date, context, caller}) do
     maybe_allow_sandbox(caller)
     items = context.get_items_for_date(date)
-    schedule_idle()
-    {:ok, %{date: date, items: items, dirty: false, context: context}}
+    {:ok, %{date: date, items: items, context: context, idle_timer: schedule_idle()}}
   end
 
   def handle_call(:get_items, _from, state) do
@@ -57,8 +55,7 @@ defmodule Elixdo.Lists.Server do
         updated = state.items ++ new_items
         Enum.each(new_items, &Elixdo.SearchIndex.index_item/1)
         broadcast(state.date, updated)
-        schedule_flush()
-        {:reply, result, %{state | items: updated, dirty: true}, {:continue, :reset_idle}}
+        {:reply, result, %{state | items: updated}, {:continue, :reset_idle}}
 
       error ->
         {:reply, error, state}
@@ -75,8 +72,7 @@ defmodule Elixdo.Lists.Server do
 
         Elixdo.SearchIndex.index_item(updated_item)
         broadcast(state.date, items)
-        schedule_flush()
-        {:reply, result, %{state | items: items, dirty: true}, {:continue, :reset_idle}}
+        {:reply, result, %{state | items: items}, {:continue, :reset_idle}}
 
       error ->
         {:reply, error, state}
@@ -93,8 +89,7 @@ defmodule Elixdo.Lists.Server do
 
         Elixdo.SearchIndex.index_item(copy)
         broadcast(state.date, items)
-        schedule_flush()
-        {:reply, result, %{state | items: items, dirty: true}, {:continue, :reset_idle}}
+        {:reply, result, %{state | items: items}, {:continue, :reset_idle}}
 
       error ->
         {:reply, error, state}
@@ -105,8 +100,7 @@ defmodule Elixdo.Lists.Server do
     case state.context.reorder_items(state.date, ids) do
       {:ok, reordered} = result ->
         broadcast(state.date, reordered)
-        schedule_flush()
-        {:reply, result, %{state | items: reordered, dirty: true}, {:continue, :reset_idle}}
+        {:reply, result, %{state | items: reordered}, {:continue, :reset_idle}}
 
       error ->
         {:reply, error, state}
@@ -118,29 +112,13 @@ defmodule Elixdo.Lists.Server do
   end
 
   def handle_continue(:reset_idle, state) do
-    {:noreply, state}
-  end
-
-  def handle_info(:flush, %{dirty: false} = state), do: {:noreply, state}
-
-  def handle_info(:flush, state) do
-    # State is already persisted via DB context calls — dirty flag just tracks
-    # whether we need to broadcast. In this implementation DB writes happen
-    # immediately in the context; flush clears the flag.
-    {:noreply, %{state | dirty: false}}
+    Process.cancel_timer(state.idle_timer)
+    {:noreply, %{state | idle_timer: schedule_idle()}}
   end
 
   def handle_info(:idle_timeout, state) do
     Logger.debug("Lists.Server shutting down idle process for #{state.date}")
     {:stop, :normal, state}
-  end
-
-  def terminate(_reason, state) do
-    if state.dirty do
-      Logger.debug("Lists.Server flushing on terminate for #{state.date}")
-    end
-
-    :ok
   end
 
   if Mix.env() == :test do
@@ -157,10 +135,6 @@ defmodule Elixdo.Lists.Server do
     end
   else
     defp maybe_allow_sandbox(_caller), do: :ok
-  end
-
-  defp schedule_flush do
-    Process.send_after(self(), :flush, @flush_interval_ms)
   end
 
   defp schedule_idle do

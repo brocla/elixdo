@@ -42,5 +42,3 @@ config :elixdo, ocr: Elixdo.OCR.Mock
 
 # fast idle for tests
 config :elixdo, :list_server_idle_ms, 200
-# fast flush for tests
-config :elixdo, :list_server_flush_ms, 50
