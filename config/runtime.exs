@@ -38,7 +38,7 @@ if config_env() == :prod do
 
   config :elixdo, ElixdoWeb.Endpoint,
     url: [host: System.get_env("PHX_HOST") || "example.com", port: 443, scheme: "https"],
-    http: [ip: {0, 0, 0, 0, 0, 0, 0, 0}, port: 8080],
+    http: [ip: {0, 0, 0, 0}, port: 8080],
     secret_key_base: secret_key_base
 
   # ## SSL Support

@@ -15,6 +15,22 @@ defmodule ElixdoWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :api_auth do
+    plug :accepts, ["json"]
+    plug ElixdoWeb.ApiAuthPlug
+  end
+
+  scope "/api/v1", ElixdoWeb.Api do
+    pipe_through :api_auth
+
+    get "/lists/:date", ListController, :show
+    get "/lists", ListController, :index
+    post "/lists/:date/items", ListController, :create_items
+    patch "/lists/:date/reorder", ListController, :reorder
+    patch "/items/:id", ItemController, :update
+    post "/items/:id/arrow", ItemController, :arrow
+  end
+
   scope "/:secret", ElixdoWeb do
     pipe_through :browser
     get "/", PageController, :index

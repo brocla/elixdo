@@ -117,13 +117,10 @@ defmodule ElixdoWeb.ListLive do
     {:noreply, socket |> assign(:selected, selected) |> assign(:highlighted_item_id, nil)}
   end
 
-  def handle_event("select_all", _, socket) do
+  def handle_event("toggle_all", _, socket) do
     all_ids = socket.assigns.items |> Enum.map(& &1.id) |> MapSet.new()
-    {:noreply, assign(socket, :selected, all_ids)}
-  end
-
-  def handle_event("deselect_all", _, socket) do
-    {:noreply, assign(socket, :selected, MapSet.new())}
+    selected = if socket.assigns.selected == all_ids, do: MapSet.new(), else: all_ids
+    {:noreply, assign(socket, :selected, selected)}
   end
 
   # Add item
@@ -341,4 +338,7 @@ defmodule ElixdoWeb.ListLive do
   defp color_class(:green), do: "color-green"
   defp color_class(:purple), do: "color-purple"
   defp color_class(:orange), do: "color-orange"
+
+  defp color_item_class(%{color: nil}), do: nil
+  defp color_item_class(%{color: color}), do: "color-#{color}"
 end

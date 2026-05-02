@@ -106,7 +106,7 @@ defmodule ElixdoWeb.ListLiveTest do
       {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-01")
 
       # Select the item
-      view |> element("button.select-btn[phx-value-id='#{item.id}']") |> render_click()
+      view |> element("button.item-select-btn[phx-value-id='#{item.id}']") |> render_click()
 
       # Click the arrow-forward toolbar button
       html = view |> element("button[phx-click='arrow_selected']") |> render_click()
@@ -125,7 +125,7 @@ defmodule ElixdoWeb.ListLiveTest do
       {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-02")
 
       # Select and open modal
-      view |> element("button.select-btn[phx-value-id='#{item.id}']") |> render_click()
+      view |> element("button.item-select-btn[phx-value-id='#{item.id}']") |> render_click()
       view |> element("button[phx-click='arrow_selected']") |> render_click()
 
       # Submit with a target date
@@ -143,7 +143,7 @@ defmodule ElixdoWeb.ListLiveTest do
       item = List.first(items)
       {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-03")
 
-      view |> element("button.select-btn[phx-value-id='#{item.id}']") |> render_click()
+      view |> element("button.item-select-btn[phx-value-id='#{item.id}']") |> render_click()
       view |> element("button[phx-click='arrow_selected']") |> render_click()
       view |> element(".elixdo-modal form") |> render_submit(%{"to_date" => "2026-08-11"})
 
@@ -159,7 +159,7 @@ defmodule ElixdoWeb.ListLiveTest do
       item = List.first(items)
       {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-04")
 
-      view |> element("button.select-btn[phx-value-id='#{item.id}']") |> render_click()
+      view |> element("button.item-select-btn[phx-value-id='#{item.id}']") |> render_click()
       view |> element("button[phx-click='arrow_selected']") |> render_click()
       html = view |> element("button[phx-click='cancel_arrow']") |> render_click()
 

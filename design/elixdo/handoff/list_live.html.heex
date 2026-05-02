@@ -131,7 +131,7 @@
     <ul class="items-list" id="items-list" phx-hook="DragSort">
       <%= for item <- @items do %>
         <li
-          class={["item", item_class(item), color_item_class(item), if(@highlighted_item_id == item.id, do: "search-highlight")] |> Enum.reject(&is_nil/1) |> Enum.join(" ")}
+          class={"item #{item_class(item)} #{color_item_class(item)}#{if @highlighted_item_id == item.id, do: " search-highlight", else: ""}"}
           data-id={item.id}
         >
           <span class="drag-handle">⠿</span>
@@ -159,7 +159,16 @@
               </div>
             </form>
           <% else %>
-            <span class={"item-body #{item_classes(item)}"} phx-click="start_edit" phx-value-id={item.id}><span class="item-text">{item.body}</span><%= if item.status == :arrowed_out && item.arrowed_to_date do %><span class="arrow-annotation"> ➜ {item.arrowed_to_date}</span><% end %></span>
+            <span
+              class={"item-body #{item_classes(item)}"}
+              phx-click="start_edit"
+              phx-value-id={item.id}
+            >
+              <span class="item-text">{item.body}</span>
+              <%= if item.status == :arrowed_out && item.arrowed_to_date do %>
+                <span class="arrow-annotation"> ➜ {item.arrowed_to_date}</span>
+              <% end %>
+            </span>
           <% end %>
         </li>
       <% end %>

@@ -27,10 +27,12 @@ defmodule Elixdo.Lists.DB do
     items_attrs
     |> Enum.with_index(1)
     |> Enum.reduce(Ecto.Multi.new(), fn {attrs, idx}, multi ->
+      normalized = normalize_keys(attrs)
+
       changeset =
         ListItem.changeset(
           %ListItem{},
-          Map.merge(attrs, %{date: date, position: max_pos + idx})
+          Map.merge(normalized, %{"date" => date, "position" => max_pos + idx})
         )
 
       Ecto.Multi.insert(multi, {:item, idx}, changeset)
@@ -44,6 +46,10 @@ defmodule Elixdo.Lists.DB do
       {:error, _, changeset, _} ->
         {:error, changeset}
     end
+  end
+
+  defp normalize_keys(map) when is_map(map) do
+    Map.new(map, fn {k, v} -> {to_string(k), v} end)
   end
 
   @valid_transitions %{

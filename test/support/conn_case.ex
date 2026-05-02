@@ -33,6 +33,7 @@ defmodule ElixdoWeb.ConnCase do
 
   setup tags do
     Elixdo.DataCase.setup_sandbox(tags)
+    Elixdo.DataCase.stop_list_servers()
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

@@ -1,3 +1,5 @@
+const editableTags = new Set(["INPUT", "TEXTAREA", "SELECT"]);
+
 const Swipe = {
   mounted() {
     let startX = null;
@@ -15,6 +17,17 @@ const Swipe = {
       }
       startX = null;
     }, { passive: true });
+
+    this._keyHandler = (e) => {
+      if (editableTags.has(document.activeElement.tagName)) return;
+      if (e.key === "ArrowLeft")  this.pushEvent("key_nav", { key: "ArrowLeft" });
+      if (e.key === "ArrowRight") this.pushEvent("key_nav", { key: "ArrowRight" });
+    };
+    window.addEventListener("keydown", this._keyHandler);
+  },
+
+  destroyed() {
+    window.removeEventListener("keydown", this._keyHandler);
   }
 };
 

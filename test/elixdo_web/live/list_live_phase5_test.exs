@@ -89,13 +89,16 @@ defmodule ElixdoWeb.ListLivePhase5Test do
     assert html =~ ~s(class="item wiggled-out")
   end
 
-  test "select all selects every item", %{conn: conn} do
+  test "toggle_all selects every item, then deselects on second click", %{conn: conn} do
     date = ~D[2026-05-20]
     Elixdo.Lists.create_items(date, [%{body: "item a"}, %{body: "item b"}])
 
     {:ok, view, _} = live(conn, list_path("2026-05-20"))
-    html = view |> element("[phx-click='select_all']") |> render_click()
+    html = view |> element("[phx-click='toggle_all']") |> render_click()
     assert html =~ ~s(class="select-btn selected")
+
+    html = view |> element("[phx-click='toggle_all']") |> render_click()
+    refute html =~ ~s(class="select-btn selected")
   end
 
   test "apply bold decoration to selected items", %{conn: conn} do
