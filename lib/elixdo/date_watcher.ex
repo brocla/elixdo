@@ -20,7 +20,7 @@ defmodule Elixdo.DateWatcher do
     Process.send_after(self(), :midnight, ms)
   end
 
-  def ms_until_midnight do
+  defp ms_until_midnight do
     now = DateTime.now!("America/Denver")
     tomorrow = now |> DateTime.to_date() |> Date.add(1)
     midnight = DateTime.new!(tomorrow, ~T[00:00:00], "America/Denver")
