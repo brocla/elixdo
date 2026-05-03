@@ -129,7 +129,8 @@ defmodule ElixdoWeb.ListLiveTest do
       view |> element("button[phx-click='arrow_selected']") |> render_click()
 
       # Submit with a target date
-      html = view |> element(".elixdo-modal form") |> render_submit(%{"to_date" => "2026-08-10"})
+      view |> element(".elixdo-modal form") |> render_submit(%{"to_date" => "2026-08-10"})
+      html = render(view)
 
       # Modal closes and original item is now arrowed-out
       refute html =~ "Arrow forward to date"

@@ -21,6 +21,7 @@ defmodule ElixdoWeb.ListLiveRemoveFormatsTest do
 
   defp click_remove_formats(view) do
     view |> element("[phx-click='remove_formats']") |> render_click()
+    render(view)
   end
 
   test "remove_formats clears bold on an active item", %{conn: conn} do

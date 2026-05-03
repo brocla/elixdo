@@ -1,4 +1,5 @@
 defmodule Elixdo.OCR do
+  # Dispatcher module that also owns the behaviour contract — impl swapped via application config.
   @callback extract_items(binary()) :: {:ok, [String.t()]} | {:error, term()}
   def extract_items(image_data), do: impl().extract_items(image_data)
   defp impl, do: Application.get_env(:elixdo, :ocr, Elixdo.OCR.OpenAI)

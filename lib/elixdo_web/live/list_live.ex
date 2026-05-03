@@ -129,11 +129,10 @@ defmodule ElixdoWeb.ListLive do
 
     if body != "" do
       Lists.create_items(socket.assigns.date, [%{body: body}])
-      items = Lists.get_items_for_date(socket.assigns.date)
 
       {:noreply,
        socket
-       |> assign(items: items, selected: MapSet.new())
+       |> assign(:selected, MapSet.new())
        |> push_event("clear_add_input", %{})}
     else
       {:noreply, socket}
@@ -153,8 +152,7 @@ defmodule ElixdoWeb.ListLive do
     if body != "" do
       item = Enum.find(socket.assigns.items, &(&1.id == id))
       if item, do: Lists.update_item(item, %{body: body})
-      items = Lists.get_items_for_date(socket.assigns.date)
-      {:noreply, assign(socket, items: items, editing_id: nil)}
+      {:noreply, assign(socket, :editing_id, nil)}
     else
       {:noreply, assign(socket, :editing_id, nil)}
     end
@@ -165,7 +163,14 @@ defmodule ElixdoWeb.ListLive do
   end
 
   # Toolbar status actions (apply to all selected)
-  def handle_event("set_status", %{"status" => status_str}, socket) do
+  @valid_statuses Ecto.Enum.values(Elixdo.ListItem, :status)
+  @valid_status_strings Enum.map(@valid_statuses, &Atom.to_string/1)
+
+  @valid_colors Ecto.Enum.values(Elixdo.ListItem, :color)
+  @valid_color_strings Enum.map(@valid_colors, &Atom.to_string/1)
+
+  def handle_event("set_status", %{"status" => status_str}, socket)
+      when status_str in @valid_status_strings do
     status = String.to_existing_atom(status_str)
 
     selected_items =
@@ -175,9 +180,10 @@ defmodule ElixdoWeb.ListLive do
       Lists.update_item(item, %{status: status})
     end)
 
-    items = Lists.get_items_for_date(socket.assigns.date)
-    {:noreply, assign(socket, :items, items)}
+    {:noreply, socket}
   end
+
+  def handle_event("set_status", _, socket), do: {:noreply, socket}
 
   # Toolbar decoration actions
   def handle_event("set_decoration", %{"field" => field, "setting" => setting}, socket) do
@@ -189,7 +195,9 @@ defmodule ElixdoWeb.ListLive do
         "bold" -> %{bold: setting == "true"}
         "italic" -> %{italic: setting == "true"}
         "highlighted" -> %{highlighted: setting == "true"}
-        "color" -> %{color: if(setting == "", do: nil, else: String.to_existing_atom(setting))}
+        "color" when setting == "" -> %{color: nil}
+        "color" when setting in @valid_color_strings -> %{color: String.to_existing_atom(setting)}
+        "color" -> %{}
         "prefix" -> %{prefix: if(setting == "", do: nil, else: setting)}
         _ -> %{}
       end
@@ -198,8 +206,7 @@ defmodule ElixdoWeb.ListLive do
       Lists.update_item(item, attrs)
     end)
 
-    items = Lists.get_items_for_date(socket.assigns.date)
-    {:noreply, assign(socket, :items, items)}
+    {:noreply, socket}
   end
 
   # Remove all formats + restore active status (except arrowed_out, which cannot transition)
@@ -211,8 +218,7 @@ defmodule ElixdoWeb.ListLive do
       Lists.update_item(item, %{bold: false, italic: false, highlighted: false, color: nil, status: :active, arrowed_to_date: nil})
     end)
 
-    items = Lists.get_items_for_date(socket.assigns.date)
-    {:noreply, assign(socket, :items, items)}
+    {:noreply, socket}
   end
 
   # Arrow-out flow
@@ -237,11 +243,8 @@ defmodule ElixdoWeb.ListLive do
           end
         end)
 
-        items = Lists.get_items_for_date(socket.assigns.date)
-
         {:noreply,
          assign(socket,
-           items: items,
            arrow_modal: false,
            arrow_item_ids: [],
            selected: MapSet.new()
@@ -258,11 +261,8 @@ defmodule ElixdoWeb.ListLive do
 
   def handle_event("reorder", %{"order" => ids}, socket) do
     int_ids = Enum.map(ids, &String.to_integer(to_string(&1)))
-
-    case Lists.reorder_items(socket.assigns.date, int_ids) do
-      {:ok, items} -> {:noreply, assign(socket, :items, items)}
-      {:error, _} -> {:noreply, socket}
-    end
+    Lists.reorder_items(socket.assigns.date, int_ids)
+    {:noreply, socket}
   end
 
   # Search

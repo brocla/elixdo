@@ -89,23 +89,28 @@ defmodule ElixdoWeb.Api.ListController do
 
   defp stringify_keys(other), do: other
 
+  @valid_statuses Ecto.Enum.values(Elixdo.ListItem, :status)
+  @valid_status_strings Enum.map(@valid_statuses, &Atom.to_string/1)
+
   defp parse_statuses(nil), do: nil
   defp parse_statuses(""), do: nil
 
   defp parse_statuses(status_str) when is_binary(status_str) do
-    status_str
-    |> String.split(",")
-    |> Enum.map(&String.trim/1)
-    |> Enum.reject(&(&1 == ""))
-    |> Enum.map(&String.to_existing_atom/1)
-  rescue
-    ArgumentError -> nil
+    strings =
+      status_str
+      |> String.split(",")
+      |> Enum.map(&String.trim/1)
+      |> Enum.reject(&(&1 == ""))
+
+    if Enum.all?(strings, &(&1 in @valid_status_strings)) do
+      Enum.map(strings, &String.to_existing_atom/1)
+    end
   end
 
   defp parse_statuses(statuses) when is_list(statuses) do
-    Enum.map(statuses, &String.to_existing_atom/1)
-  rescue
-    ArgumentError -> nil
+    if Enum.all?(statuses, &(&1 in @valid_status_strings)) do
+      Enum.map(statuses, &String.to_existing_atom/1)
+    end
   end
 
   defp format_errors(%Ecto.Changeset{} = changeset) do

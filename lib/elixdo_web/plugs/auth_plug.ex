@@ -1,7 +1,11 @@
 defmodule ElixdoWeb.AuthPlug do
+  @behaviour Plug
   import Plug.Conn
 
+  @impl Plug
   def init(opts), do: opts
+
+  @impl Plug
 
   def call(conn, _opts) do
     expected = System.get_env("SECRET_PATH", "dev-secret")
