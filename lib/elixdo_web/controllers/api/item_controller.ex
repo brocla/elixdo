@@ -2,14 +2,14 @@ defmodule ElixdoWeb.Api.ItemController do
   use ElixdoWeb, :controller
 
   alias Elixdo.{Lists, DateHelper, Repo, ListItem}
-  import ElixdoWeb.Api.ListController, only: [item_json: 1]
+  alias ElixdoWeb.Api.ItemJSON
 
   # PATCH /api/v1/items/:id
   def update(conn, %{"id" => id} = params) do
     with {:ok, item} <- fetch_item(id),
          attrs <- Map.drop(params, ["id"]),
          {:ok, updated} <- Lists.update_item(item, attrs) do
-      json(conn, %{data: item_json(updated)})
+      json(conn, %{data: ItemJSON.item(updated)})
     else
       {:error, :not_found} ->
         conn
@@ -24,7 +24,7 @@ defmodule ElixdoWeb.Api.ItemController do
       {:error, changeset} ->
         conn
         |> put_status(422)
-        |> json(%{error: %{code: "validation_error", message: format_errors(changeset)}})
+        |> json(%{error: %{code: "validation_error", message: ItemJSON.format_errors(changeset)}})
     end
   end
 
@@ -33,7 +33,7 @@ defmodule ElixdoWeb.Api.ItemController do
     with {:ok, item} <- fetch_item(id),
          {:ok, target_date} <- DateHelper.resolve(target_date_str),
          {:ok, original, _copy} <- Lists.arrow_item(item, target_date) do
-      json(conn, %{data: item_json(original)})
+      json(conn, %{data: ItemJSON.item(original)})
     else
       {:error, :not_found} ->
         conn
@@ -69,15 +69,4 @@ defmodule ElixdoWeb.Api.ItemController do
       item -> {:ok, item}
     end
   end
-
-  defp format_errors(%Ecto.Changeset{} = changeset) do
-    Ecto.Changeset.traverse_errors(changeset, fn {msg, opts} ->
-      Regex.replace(~r"%{(\w+)}", msg, fn _, key ->
-        opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
-      end)
-    end)
-    |> inspect()
-  end
-
-  defp format_errors(_), do: "Validation failed"
 end
