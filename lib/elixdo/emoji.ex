@@ -8,7 +8,15 @@ defmodule Elixdo.Emoji do
   @moduledoc "Converts :shortcode: patterns to emoji characters."
 
   @map %{
+    "sparkles" => "✨",
+    "splat" => "✳️",
+    "one" => "❶",
+    "two" => "❷",
+    "three" => "❸",
+    "phone" => "📞",
     "church" => "⛪",
+    "temple" => "🏛️",
+    "trophy" => "🏆",
     "thumbsup" => "👍",
     "thumbsdown" => "👎",
     "+1" => "👍",
@@ -43,7 +51,6 @@ defmodule Elixdo.Emoji do
     "clock" => "🕐",
     "money" => "💰",
     "moneybag" => "💰",
-    "phone" => "📱",
     "email" => "📧",
     "house" => "🏠",
     "car" => "🚗",

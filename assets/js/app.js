@@ -26,6 +26,7 @@ import {hooks as colocatedHooks} from "phoenix-colocated/elixdo"
 import topbar from "../vendor/topbar"
 import Swipe from "./swipe"
 import AddItem from "./add_item"
+import EditItem from "./edit_item"
 import DragSort from "./drag_sort"
 
 const SearchFocus = {
@@ -35,6 +36,7 @@ const SearchFocus = {
 let Hooks = {...colocatedHooks}
 Hooks.Swipe = Swipe
 Hooks.AddItem = AddItem
+Hooks.EditItem = EditItem
 Hooks.DragSort = DragSort
 Hooks.SearchFocus = SearchFocus
 

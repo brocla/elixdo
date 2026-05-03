@@ -74,10 +74,12 @@ defmodule Elixdo.Lists.DB do
         end
 
       new_status when is_binary(new_status) ->
-        normalized =
-          attrs |> Map.delete("status") |> Map.put(:status, String.to_existing_atom(new_status))
+        known = Map.keys(@valid_transitions)
 
-        update_item(item, normalized)
+        case Enum.find(known, &(Atom.to_string(&1) == new_status)) do
+          nil -> {:error, :forbidden_transition}
+          atom -> update_item(item, attrs |> Map.delete("status") |> Map.put(:status, atom))
+        end
     end
   end
 

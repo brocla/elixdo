@@ -569,8 +569,8 @@ body {
   min-width: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: 19px;
+  line-height: 1.2;
   cursor: pointer;
 }
 .item-body.bold   { font-weight: 700; }
@@ -813,7 +813,7 @@ body {
 @media (pointer: coarse) {
   body { font-size: 1.1rem; }
   .item { padding: 14px 14px 14px 16px; }
-  .item-body { font-size: 16px; }
+  .item-body { font-size: 20px; }
   .drag-handle { opacity: 0.4; font-size: 18px; padding: 0 0.6rem; min-width: 2rem; text-align: center; }
   .item-select-btn { width: 28px; height: 28px; }
   .toolbar-btn { min-width: 40px; height: 38px; }

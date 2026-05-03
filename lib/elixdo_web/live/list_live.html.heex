@@ -152,7 +152,7 @@
           <%= if @editing_id == item.id do %>
             <form phx-submit="save_edit" class="edit-form">
               <input type="hidden" name="_id" value={item.id} />
-              <textarea name="body" autofocus class="edit-textarea"><%= item.body %></textarea>
+              <textarea name="body" autofocus class="edit-textarea" phx-hook="EditItem" id={"edit-textarea-#{item.id}"}><%= item.body %></textarea>
               <div style="display:flex;gap:8px;margin-top:4px">
                 <button type="submit" class="save-btn">Save</button>
                 <button type="button" phx-click="cancel_edit" class="cancel-btn">Cancel</button>
