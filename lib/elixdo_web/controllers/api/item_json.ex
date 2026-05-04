@@ -9,11 +9,7 @@ defmodule ElixdoWeb.Api.ItemJSON do
       body: item.body,
       status: to_string(item.status),
       position: item.position,
-      bold: item.bold,
-      italic: item.italic,
-      highlighted: item.highlighted,
       color: item.color && to_string(item.color),
-      prefix: item.prefix,
       arrowed_to_date: item.arrowed_to_date && Date.to_iso8601(item.arrowed_to_date),
       inserted_at: format_datetime(item.inserted_at),
       updated_at: format_datetime(item.updated_at)

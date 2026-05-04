@@ -93,11 +93,7 @@ defmodule Elixdo.Lists.DB do
       create_items(to_date, [
         %{
           body: item.body,
-          color: item.color,
-          bold: item.bold,
-          italic: item.italic,
-          highlighted: item.highlighted,
-          prefix: item.prefix
+          color: item.color
         }
       ])
     end)

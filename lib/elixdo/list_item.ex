@@ -12,10 +12,6 @@ defmodule Elixdo.ListItem do
       default: :active
 
     field :color, Ecto.Enum, values: [:red, :blue, :green, :purple, :orange]
-    field :bold, :boolean, default: false
-    field :italic, :boolean, default: false
-    field :highlighted, :boolean, default: false
-    field :prefix, :string
     field :arrowed_to_date, :date
 
     timestamps(type: :utc_datetime)
@@ -29,10 +25,6 @@ defmodule Elixdo.ListItem do
       :body,
       :status,
       :color,
-      :bold,
-      :italic,
-      :highlighted,
-      :prefix,
       :arrowed_to_date
     ])
     |> validate_required([:date, :position, :body])

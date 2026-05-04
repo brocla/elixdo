@@ -44,22 +44,6 @@
           </button>
         </div>
 
-        <%# ── Style group ───────────────────────────────────────── %>
-        <div class="tb-group">
-          <button type="button" phx-click="set_decoration" phx-value-field="bold"
-                  phx-value-setting="true" class="toolbar-btn" title="Bold">
-            <b>B</b>
-          </button>
-          <button type="button" phx-click="set_decoration" phx-value-field="italic"
-                  phx-value-setting="true" class="toolbar-btn" title="Italic">
-            <i>I</i>
-          </button>
-          <button type="button" phx-click="set_decoration" phx-value-field="highlighted"
-                  phx-value-setting="true" class="toolbar-btn" title="Highlight">
-            <span style="background:oklch(85% 0.16 90 / 0.5);border-radius:3px;padding:2px 6px;font-size:19px;font-weight:800;color:oklch(90% 0.12 90)">H</span>
-          </button>
-        </div>
-
         <%# ── Color swatches ────────────────────────────────────── %>
         <div class="swatches-row">
           <button type="button" phx-click="set_decoration" phx-value-field="color"
@@ -83,12 +67,6 @@
             </svg>
           </button>
         </div>
-
-        <%# ── Prefix input ──────────────────────────────────────── %>
-        <form phx-submit="set_decoration" class="prefix-form">
-          <input type="hidden" name="field" value="prefix" />
-          <input type="text" name="setting" placeholder="pfx" class="prefix-input" maxlength="3" />
-        </form>
 
       </div>
 
@@ -144,10 +122,6 @@
             class={"item-select-btn #{if MapSet.member?(@selected, item.id), do: "selected", else: ""}"}
             title={if MapSet.member?(@selected, item.id), do: "Deselect", else: "Select"}
           ></button>
-
-          <%= if item.prefix do %>
-            <span class="prefix-badge">{item.prefix}</span>
-          <% end %>
 
           <%= if @editing_id == item.id do %>
             <form phx-submit="save_edit" class="edit-form">

@@ -192,13 +192,9 @@ defmodule ElixdoWeb.ListLive do
 
     attrs =
       case field do
-        "bold" -> %{bold: setting == "true"}
-        "italic" -> %{italic: setting == "true"}
-        "highlighted" -> %{highlighted: setting == "true"}
         "color" when setting == "" -> %{color: nil}
         "color" when setting in @valid_color_strings -> %{color: String.to_existing_atom(setting)}
         "color" -> %{}
-        "prefix" -> %{prefix: if(setting == "", do: nil, else: setting)}
         _ -> %{}
       end
 
@@ -215,7 +211,11 @@ defmodule ElixdoWeb.ListLive do
       Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
 
     Enum.each(selected_items, fn item ->
-      Lists.update_item(item, %{bold: false, italic: false, highlighted: false, color: nil, status: :active, arrowed_to_date: nil})
+      Lists.update_item(item, %{
+        color: nil,
+        status: :active,
+        arrowed_to_date: nil
+      })
     end)
 
     {:noreply, socket}
@@ -321,13 +321,7 @@ defmodule ElixdoWeb.ListLive do
   defp item_class(_), do: "active"
 
   defp item_classes(item) do
-    [
-      item_class(item),
-      if(item.bold, do: "bold", else: nil),
-      if(item.italic, do: "italic", else: nil),
-      if(item.highlighted, do: "highlighted", else: nil),
-      color_class(item.color)
-    ]
+    [item_class(item), color_class(item.color)]
     |> Enum.reject(&is_nil/1)
     |> Enum.join(" ")
   end

@@ -309,23 +309,6 @@ body {
 .swatch-purple { background: var(--c-purple); }
 .swatch-orange { background: var(--c-orange); }
 
-/* Prefix input — matches toolbar height */
-.prefix-form { display: flex; align-items: center; }
-.prefix-input {
-  width: 44px;
-  height: 40px;
-  padding: 0 8px;
-  background: var(--bg-4);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-btn);
-  color: var(--text);
-  font-family: inherit;
-  font-size: 12px;
-  text-align: center;
-}
-.prefix-input::placeholder { color: var(--text-dim); }
-.prefix-input:focus { outline: none; border-color: var(--accent); }
-
 /* Today button */
 .today-btn {
   display: flex;
@@ -545,23 +528,6 @@ body {
   background: white;
 }
 
-/* ─── Prefix badge ──────────────────────────────────────────────────── */
-
-.prefix-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 5px;
-  background: var(--bg-4);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 15px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
 /* ─── Item body ─────────────────────────────────────────────────────── */
 
 .item-body {
@@ -573,14 +539,6 @@ body {
   line-height: 1.2;
   cursor: pointer;
 }
-.item-body.bold   { font-weight: 700; }
-.item-body.italic { font-style: italic; }
-.item-body.highlighted .item-text {
-  background: oklch(85% 0.16 90 / 0.28);
-  border-radius: 3px;
-  padding: 0 2px;
-}
-
 .item-body.color-red    { color: oklch(72% 0.20 17); }
 .item-body.color-blue   { color: oklch(72% 0.18 240); }
 .item-body.color-green  { color: oklch(72% 0.16 145); }
