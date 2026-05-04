@@ -49,12 +49,12 @@ defmodule ElixdoWeb.ListLiveTest do
 
   test "return to today button hidden when on today", %{conn: conn} do
     {:ok, _view, html} = live(conn, "/#{secret()}/list")
-    refute html =~ "↩ Today"
+    refute html =~ "Today"
   end
 
   test "return to today button visible when off today", %{conn: conn} do
     {:ok, _view, html} = live(conn, "/#{secret()}/list/2026-04-01")
-    assert html =~ "↩ Today"
+    assert html =~ "Today"
   end
 
   test "return to today button navigates home", %{conn: conn} do
@@ -67,7 +67,7 @@ defmodule ElixdoWeb.ListLiveTest do
     {:ok, view, _html} = live(conn, "/#{secret()}/list")
     send(view.pid, {:new_day, ~D[2026-05-02]})
     html = render(view)
-    assert html =~ "↩ Today"
+    assert html =~ "Today"
   end
 
   test "completed item renders with completed class", %{conn: conn} do

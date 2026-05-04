@@ -153,7 +153,7 @@ body {
 .list-container {
   max-width: 780px;
   margin: 0 auto;
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
 }
@@ -332,13 +332,13 @@ body {
   align-items: center;
   gap: 5px;
   height: 40px;
-  padding: 0 12px;
+  padding: 0 14px;
   background: oklch(63% 0.27 293 / 0.14);
   border: 1px solid var(--accent-dim);
   border-radius: var(--radius-btn);
   color: var(--accent);
   font-family: inherit;
-  font-size: 12px;
+  font-size: 24px;
   font-weight: 600;
   cursor: pointer;
   letter-spacing: 0.02em;
@@ -371,7 +371,7 @@ body {
 
 /* The <label> shows weekday in accent purple */
 .date-display label {
-  font-size: 13px;
+  font-size: 24px;
   font-weight: 500;
   color: var(--accent);
   letter-spacing: 0.08em;
@@ -443,6 +443,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 /* ─── Item Card ─────────────────────────────────────────────────────── */
@@ -678,7 +680,7 @@ body {
   border: none;
   border-radius: var(--radius-card);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 24px;
   font-weight: 600;
   cursor: pointer;
   letter-spacing: 0.02em;
