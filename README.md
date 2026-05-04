@@ -2,7 +2,7 @@
 
 A personal daily todo list, built with Phoenix LiveView and deployed on Fly.io. Each day gets its own list. Items can be formatted, colored, reordered, and pushed forward to future dates. Changes sync instantly across all open devices — desktop and mobile stay in sync in real time.
 
-![Elixdo screenshot](design/Screenshot%202026-05-01%20232656.png)
+![Elixdo screenshot](design/Screenshot%202026-05-03%20221904.png)
 
 ## Access
 
