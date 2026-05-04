@@ -29,6 +29,7 @@ defmodule Elixdo.Lists.Server do
   def update_item(date, item, attrs), do: call(date, {:update_item, item, attrs})
   def arrow_item(date, item, to), do: call(date, {:arrow_item, item, to})
   def reorder_items(date, ids), do: call(date, {:reorder_items, ids})
+  def notify_item_created(date, item), do: call(date, {:notify_item_created, item})
 
   defp call(date, msg) do
     pid = Elixdo.Lists.ServerPool.get_or_start(date)
@@ -89,11 +90,22 @@ defmodule Elixdo.Lists.Server do
 
         Elixdo.SearchIndex.index_item(copy)
         broadcast(state.date, items)
+        notify_item_created(to_date, copy)
         {:reply, result, %{state | items: items}, {:continue, :reset_idle}}
 
       error ->
         {:reply, error, state}
     end
+  end
+
+  def handle_call({:notify_item_created, item}, _from, state) do
+    items =
+      if Enum.any?(state.items, &(&1.id == item.id)),
+        do: state.items,
+        else: state.items ++ [item]
+
+    broadcast(state.date, items)
+    {:reply, :ok, %{state | items: items}, {:continue, :reset_idle}}
   end
 
   def handle_call({:reorder_items, ids}, _from, state) do

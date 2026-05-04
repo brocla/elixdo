@@ -37,5 +37,23 @@ defmodule Elixdo.ListItem do
     ])
     |> validate_required([:date, :position, :body])
     |> validate_length(:body, min: 1)
+    |> validate_arrowed_to_date_consistency()
+  end
+
+  # arrowed_to_date must be set iff status is arrowed_out
+  defp validate_arrowed_to_date_consistency(changeset) do
+    status = get_field(changeset, :status)
+    arrowed_to_date = get_field(changeset, :arrowed_to_date)
+
+    cond do
+      status == :arrowed_out and is_nil(arrowed_to_date) ->
+        add_error(changeset, :arrowed_to_date, "must be set when status is arrowed_out")
+
+      status != :arrowed_out and not is_nil(arrowed_to_date) ->
+        add_error(changeset, :arrowed_to_date, "must be nil when status is not arrowed_out")
+
+      true ->
+        changeset
+    end
   end
 end

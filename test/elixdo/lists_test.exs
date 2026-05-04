@@ -163,14 +163,43 @@ defmodule Elixdo.ListsTest do
 
     test "allows arrowed_out -> active (remove formats undoes arrow)" do
       item = insert_item()
-      {:ok, arrowed} = Lists.update_item(item, %{status: :arrowed_out})
-      assert {:ok, restored} = Lists.update_item(arrowed, %{status: :active})
+      {:ok, arrowed, _copy} = Lists.arrow_item(item, ~D[2026-09-01])
+      assert {:ok, restored} = Lists.update_item(arrowed, %{status: :active, arrowed_to_date: nil})
       assert restored.status == :active
+      assert restored.arrowed_to_date == nil
+    end
+
+    test "rejects setting arrowed_to_date on an active item" do
+      item = insert_item()
+      assert {:error, changeset} = Lists.update_item(item, %{arrowed_to_date: ~D[2030-01-01]})
+      assert %{arrowed_to_date: [_ | _]} = errors_on(changeset)
+    end
+
+    test "rejects clearing arrowed_to_date alone on an arrowed_out item" do
+      item = insert_item()
+      {:ok, arrowed, _copy} = Lists.arrow_item(item, ~D[2026-09-01])
+      assert {:error, changeset} = Lists.update_item(arrowed, %{arrowed_to_date: nil})
+      assert %{arrowed_to_date: [_ | _]} = errors_on(changeset)
+    end
+
+    test "allows clearing arrowed_to_date together with status: active (remove formats path)" do
+      item = insert_item(%{bold: true, italic: true})
+      {:ok, arrowed, _copy} = Lists.arrow_item(item, ~D[2026-09-01])
+      assert {:ok, restored} =
+               Lists.update_item(arrowed, %{
+                 status: :active,
+                 arrowed_to_date: nil,
+                 bold: false,
+                 italic: false
+               })
+      assert restored.status == :active
+      assert restored.arrowed_to_date == nil
+      assert restored.bold == false
     end
 
     test "forbids arrowed_out -> completed" do
       item = insert_item()
-      {:ok, arrowed} = Lists.update_item(item, %{status: :arrowed_out})
+      {:ok, arrowed, _copy} = Lists.arrow_item(item, ~D[2026-09-01])
       assert {:error, :forbidden_transition} = Lists.update_item(arrowed, %{status: :completed})
     end
 
@@ -219,6 +248,19 @@ defmodule Elixdo.ListsTest do
       item = insert_item()
       {:ok, wiggled} = Lists.update_item(item, %{status: :wiggled_out})
       assert {:error, :forbidden_transition} = Lists.arrow_item(wiggled, @date2)
+    end
+
+    test "copy is visible on target date even when target server was already running" do
+      # Pre-warm the target date server so it has an in-memory state before the arrow.
+      # Without a fix, arrow_item only broadcasts to the source date; the target server's
+      # stale state is returned by get_items_for_date, hiding the copy.
+      assert [] = Lists.get_items_for_date(@date2)
+
+      item = insert_item(%{body: "arrow this", date: @date})
+      assert {:ok, _original, _copy} = Lists.arrow_item(item, @date2)
+
+      items = Lists.get_items_for_date(@date2)
+      assert Enum.any?(items, &(&1.body == "arrow this"))
     end
   end
 

@@ -66,10 +66,11 @@ defmodule ElixdoWeb.Api.ItemControllerTest do
       conn =
         conn
         |> auth_conn()
-        |> patch("/api/v1/items/#{original.id}", %{status: "active"})
+        |> patch("/api/v1/items/#{original.id}", %{status: "active", arrowed_to_date: nil})
 
       assert %{"data" => result} = json_response(conn, 200)
       assert result["status"] == "active"
+      assert result["arrowed_to_date"] == nil
     end
 
     test "returns 422 for forbidden transition (completed → wiggled_out)", %{conn: conn} do

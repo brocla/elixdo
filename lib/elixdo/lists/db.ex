@@ -78,7 +78,7 @@ defmodule Elixdo.Lists.DB do
 
         case Enum.find(known, &(Atom.to_string(&1) == new_status)) do
           nil -> {:error, :forbidden_transition}
-          atom -> update_item(item, attrs |> Map.delete("status") |> Map.put(:status, atom))
+          atom -> update_item(item, Map.put(attrs, "status", atom))
         end
     end
   end
