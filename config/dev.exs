@@ -20,8 +20,8 @@ config :elixdo, ElixdoWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  # This is a dev-only placeholder. Generate your own with: mix phx.gen.secret
-  secret_key_base: "dev_only_not_secret_replace_for_production_use_mix_phx_gen_secret_00000000",
+  # Dev-only placeholder — not a real secret. Production uses SECRET_KEY_BASE env var.
+  secret_key_base: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:elixdo, ~w(--sourcemap=inline --watch)]},
     tailwind: {Tailwind, :install_and_run, [:elixdo, ~w(--watch)]}

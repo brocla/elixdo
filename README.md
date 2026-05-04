@@ -58,18 +58,7 @@ mix test
 
 ## Deployment
 
-The app is deployed on [Fly.io](https://fly.io). Database migrations run automatically on deploy via the `release_command` in `fly.toml`.
-
-```bash
-# Deploy
-fly deploy
-
-# View logs
-fly logs
-
-# Open a remote IEx console
-fly ssh console --pty -C "/app/bin/elixdo remote"
-```
+See [DEPLOYMENT_README.md](DEPLOYMENT_README.md) for full instructions on deploying your own instance to Fly.io, including prerequisites, secrets, and volume setup.
 
 ## Tech Stack
 
