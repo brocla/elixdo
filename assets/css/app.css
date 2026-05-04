@@ -812,10 +812,11 @@ body {
 
 @media (pointer: coarse) {
   body { font-size: 1.1rem; }
-  .item { padding: 14px 14px 14px 16px; }
-  .item-body { font-size: 20px; }
-  .drag-handle { opacity: 0.4; font-size: 18px; padding: 0 0.6rem; min-width: 2rem; text-align: center; }
-  .item-select-btn { width: 28px; height: 28px; }
+  .item { padding: 16px 14px 16px 16px; gap: 12px; }
+  .item-body { font-size: 22px; line-height: 1.25; }
+  .drag-handle { opacity: 0.4; font-size: 20px; padding: 0 0.6rem; min-width: 2rem; text-align: center; }
+  .item-select-btn { width: 32px; height: 32px; }
+  .item-select-btn.selected::after { width: 8px; height: 8px; }
   .toolbar-btn { min-width: 40px; height: 38px; }
   .add-item-input { font-size: 1.1rem; padding: 0.75rem; }
   .date-header { padding: 0.75rem; }
