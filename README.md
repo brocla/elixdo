@@ -4,6 +4,9 @@ A personal daily todo list, built with Phoenix LiveView and deployed on Fly.io. 
 
 ![Elixdo screenshot](design/Screenshot%202026-05-03%20221904.png)
 
+The design mimics my use of todo lists on paper.  
+
+
 ## Access
 
 The app is protected by a secret URL segment rather than a login. The URL looks like:
@@ -13,6 +16,8 @@ https://elixdo.fly.dev/<your-secret>/list/today
 ```
 
 The secret is set via an environment variable (`SECRET_PATH`) on the server. Anyone who knows the URL can use the app — keep it private.
+
+This method was chosen to lower the friction to login to near zero, to help the app compete well against paper.
 
 ## Using the App
 
@@ -25,6 +30,8 @@ The secret is set via an environment variable (`SECRET_PATH`) on the server. Any
 - **Navigate dates** — use ‹ › arrows or the calendar picker; "Today" button jumps back to today
 - **Reorder** — drag and drop items within a day
 - **Search** — click the magnifying glass to search across all items
+
+Note, todo items added to the list can be edited and decorated, but not deleted. I never erased items off paper todo lists. I struck them out when complete. Wiggled them out if abandoned. And Arrowed them out if moved to another day. But never deleted them. 
 
 ## Updating the Secret
 
