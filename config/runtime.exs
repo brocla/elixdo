@@ -16,13 +16,6 @@ import Config
 #
 # Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
 # script that automatically sets the env var above.
-if System.get_env("PHX_SERVER") do
-  config :elixdo, ElixdoWeb.Endpoint, server: true
-end
-
-config :elixdo, ElixdoWeb.Endpoint,
-  http: [port: String.to_integer(System.get_env("PORT", "4000"))]
-
 if config_env() == :prod do
   database_path = System.get_env("DATABASE_PATH", "/data/elixdo.db")
 
@@ -37,10 +30,11 @@ if config_env() == :prod do
   config :elixdo, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :elixdo, ElixdoWeb.Endpoint,
+    server: true,
     url: [host: System.get_env("PHX_HOST") || "example.com", port: 443, scheme: "https"],
-    # Must bind IPv6 (::) — Fly.io proxy connects over IPv6 internally.
+    # Must bind IPv6 (::) — Fly.io proxy connects to the app over IPv6 internally.
     # Do not change to {0,0,0,0} (IPv4 only) or the app will be unreachable.
-    http: [ip: {0, 0, 0, 0, 0, 0, 0, 0}, port: 8080],
+    http: [ip: {0, 0, 0, 0, 0, 0, 0, 0}, port: String.to_integer(System.get_env("PORT", "8080"))],
     secret_key_base: secret_key_base
 
   # ## SSL Support
