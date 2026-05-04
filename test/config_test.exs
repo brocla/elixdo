@@ -23,6 +23,9 @@ defmodule Elixdo.ConfigTest do
 
     assert @css =~ ~r/\.items-list\s*\{[^}]*overflow-y\s*:\s*auto/,
            ".items-list must have overflow-y: auto so items scroll within the fixed container."
+
+    assert @css =~ ~r/\.items-list\s*\{[^}]*min-height\s*:\s*0/,
+           ".items-list must have min-height: 0 so the flex child can shrink and overflow-y: auto takes effect."
   end
 
   test "runtime.exs binds IPv6 for Fly.io proxy compatibility" do

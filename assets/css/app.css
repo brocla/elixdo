@@ -445,6 +445,7 @@ body {
   gap: 8px;
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
 }
 
 /* ─── Item Card ─────────────────────────────────────────────────────── */
