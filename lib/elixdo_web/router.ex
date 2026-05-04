@@ -23,6 +23,7 @@ defmodule ElixdoWeb.Router do
   scope "/" do
     pipe_through :api
     get "/manifest.json", ElixdoWeb.ManifestController, :show
+    get "/health", ElixdoWeb.HealthController, :show
   end
 
   scope "/api/v1", ElixdoWeb.Api do
