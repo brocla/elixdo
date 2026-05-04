@@ -153,7 +153,7 @@ body {
 .list-container {
   max-width: 780px;
   margin: 0 auto;
-  min-height: 100dvh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
 }
