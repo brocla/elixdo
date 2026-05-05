@@ -120,12 +120,6 @@ defmodule ElixdoWeb.ListLive do
     {:noreply, socket |> assign(:selected, selected) |> assign(:highlighted_item_id, nil)}
   end
 
-  def handle_event("toggle_all", _, socket) do
-    all_ids = socket.assigns.items |> Enum.map(& &1.id) |> MapSet.new()
-    selected = if socket.assigns.selected == all_ids, do: MapSet.new(), else: all_ids
-    {:noreply, assign(socket, :selected, selected)}
-  end
-
   # Voice input
   def handle_event("voice_input", %{"text" => text}, socket) do
     text = text |> String.trim() |> Emoji.convert()

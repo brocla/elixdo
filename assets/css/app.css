@@ -227,43 +227,6 @@ body {
 .toolbar-btn:hover { background: var(--bg-4); color: white; }
 .priority-btn { color: var(--text); font-size: 22px; padding: 0 4px; min-width: unset; }
 
-/* Select-all button — ring matches item-select-btn */
-.select-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: var(--bg-3);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-btn);
-  cursor: pointer;
-  transition: all 0.12s;
-  position: relative;
-}
-.select-btn::before {
-  content: "";
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 2px solid oklch(72% 0.015 280);
-  transition: all 0.12s;
-  flex-shrink: 0;
-}
-.select-btn:hover::before { border-color: var(--accent); }
-.select-btn.selected::before {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-.select-btn.selected::after {
-  content: "";
-  position: absolute;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: white;
-  pointer-events: none;
-}
 
 /* Search and sort buttons */
 .search-btn,
