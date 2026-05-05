@@ -35,6 +35,7 @@ defmodule ElixdoWeb.Router do
     patch "/lists/:date/reorder", ListController, :reorder
     patch "/items/:id", ItemController, :update
     post "/items/:id/arrow", ItemController, :arrow
+    post "/mcp", McpController, :handle
   end
 
   scope "/:secret", ElixdoWeb do
