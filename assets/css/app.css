@@ -337,22 +337,21 @@ body {
 .today-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
+  width: 26px;
   height: 40px;
-  padding: 0 14px;
-  background: oklch(63% 0.27 293 / 0.14);
-  border: 1px solid var(--accent-dim);
+  padding: 0;
+  background: var(--bg-2);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-btn);
-  color: var(--accent);
+  color: oklch(82% 0.012 280);
   font-family: inherit;
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 18px;
   cursor: pointer;
-  letter-spacing: 0.02em;
   transition: all 0.12s;
-  white-space: nowrap;
+  flex-shrink: 0;
 }
-.today-btn:hover { background: oklch(63% 0.27 293 / 0.24); }
+.today-btn:hover { border-color: var(--accent); color: white; }
 
 /* Hide old separator */
 .toolbar-sep { display: none; }

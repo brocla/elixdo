@@ -180,12 +180,12 @@ defmodule ElixdoWeb.Api.McpControllerTest do
   test "add_item converts shortcodes in body", %{conn: conn} do
     mcp(conn, "tools/call", %{
       "name" => "add_item",
-      "arguments" => %{"date" => "2026-11-13", "body" => "buy :coffee: and :pizza:"}
+      "arguments" => %{"date" => "2026-11-13", "body" => "buy :star: and :rocket:"}
     })
     |> json_response(200)
 
     [item] = Lists.get_items_for_date(~D[2026-11-13])
-    assert item.body == "buy ☕ and 🍕"
+    assert item.body == "buy ⭐ and 🚀"
   end
 
   test "update_item converts shortcodes in body", %{conn: conn} do
