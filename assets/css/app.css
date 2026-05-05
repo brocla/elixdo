@@ -644,12 +644,12 @@ body {
 .add-item-input {
   flex: 1;
   padding: 10px 14px;
-  background: var(--bg-2);
+  background: #000;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-card);
   color: var(--text);
   font-family: inherit;
-  font-size: 15px;
+  font-size: 20px;
   resize: none;
   min-height: 44px;
   transition: border-color 0.12s, box-shadow 0.12s;
@@ -669,7 +669,7 @@ body {
   border: none;
   border-radius: var(--radius-card);
   font-family: inherit;
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 600;
   cursor: pointer;
   letter-spacing: 0.02em;
@@ -835,7 +835,7 @@ body {
   .item-select-btn.selected::after { width: 8px; height: 8px; }
   .toolbar-btn { min-width: 40px; height: 38px; }
   .priority-btn { font-size: 22px; padding: 0 4px; min-width: unset; }
-  .add-item-input { font-size: 1.1rem; padding: 0.75rem; }
+  .add-item-input { font-size: 20px; padding: 0.75rem; }
   .date-header { padding: 0.75rem; }
   .nav-arrow { font-size: 2rem; padding: 0.5rem 1.2rem; }
   .search-modal { min-width: unset; width: 90vw; }
