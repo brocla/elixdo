@@ -20,9 +20,8 @@ defmodule ElixdoWeb.Router do
     plug ElixdoWeb.ApiAuthPlug
   end
 
-  # MCP needs to accept both JSON and SSE (text/event-stream) for Streamable HTTP transport
+  # MCP handles its own content negotiation (JSON and SSE), so no :accepts plug here
   pipeline :mcp_auth do
-    plug :accepts, ["json", "event-stream"]
     plug ElixdoWeb.ApiAuthPlug
   end
 
