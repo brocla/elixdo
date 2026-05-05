@@ -180,7 +180,7 @@ defmodule ElixdoWeb.ListLive do
       Lists.update_item(item, %{priority: p})
     end)
 
-    {:noreply, socket}
+    {:noreply, clear_selection(socket)}
   end
 
   def handle_event("set_status", %{"status" => status_str}, socket)
@@ -194,7 +194,7 @@ defmodule ElixdoWeb.ListLive do
       Lists.update_item(item, %{status: status})
     end)
 
-    {:noreply, socket}
+    {:noreply, clear_selection(socket)}
   end
 
   def handle_event("set_status", _, socket), do: {:noreply, socket}
@@ -216,7 +216,7 @@ defmodule ElixdoWeb.ListLive do
       Lists.update_item(item, attrs)
     end)
 
-    {:noreply, socket}
+    {:noreply, clear_selection(socket)}
   end
 
   # Remove all formats + restore active status (except arrowed_out, which cannot transition)
@@ -233,7 +233,7 @@ defmodule ElixdoWeb.ListLive do
       })
     end)
 
-    {:noreply, socket}
+    {:noreply, clear_selection(socket)}
   end
 
   # Arrow-out flow
@@ -338,6 +338,8 @@ defmodule ElixdoWeb.ListLive do
     secret = socket.assigns.secret
     ~p"/#{secret}/list/#{Date.to_iso8601(date)}"
   end
+
+  defp clear_selection(socket), do: assign(socket, :selected, MapSet.new())
 
   defp item_class(%{status: :completed}), do: "completed"
   defp item_class(%{status: :wiggled_out}), do: "wiggled-out"
