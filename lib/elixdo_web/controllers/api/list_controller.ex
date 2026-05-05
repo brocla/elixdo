@@ -69,7 +69,9 @@ defmodule ElixdoWeb.Api.ListController do
       {:error, :partial_reorder} ->
         conn
         |> put_status(422)
-        |> json(%{error: %{code: "partial_reorder", message: "IDs do not match items on this date"}})
+        |> json(%{
+          error: %{code: "partial_reorder", message: "IDs do not match items on this date"}
+        })
 
       {:error, _} ->
         conn

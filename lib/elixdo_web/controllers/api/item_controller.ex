@@ -19,7 +19,9 @@ defmodule ElixdoWeb.Api.ItemController do
       {:error, :forbidden_transition} ->
         conn
         |> put_status(422)
-        |> json(%{error: %{code: "forbidden_transition", message: "Status transition is not allowed"}})
+        |> json(%{
+          error: %{code: "forbidden_transition", message: "Status transition is not allowed"}
+        })
 
       {:error, changeset} ->
         conn
@@ -48,7 +50,9 @@ defmodule ElixdoWeb.Api.ItemController do
       {:error, :forbidden_transition} ->
         conn
         |> put_status(422)
-        |> json(%{error: %{code: "forbidden_transition", message: "Only active items can be arrowed"}})
+        |> json(%{
+          error: %{code: "forbidden_transition", message: "Only active items can be arrowed"}
+        })
 
       {:error, _} ->
         conn

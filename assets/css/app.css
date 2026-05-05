@@ -312,6 +312,64 @@ body {
 .swatch-purple { background: var(--c-purple); }
 .swatch-orange { background: var(--c-orange); }
 
+/* Mobile priority trigger button — hidden on desktop, shown on coarse */
+.priority-mobile-btn { display: none; font-size: 22px; }
+
+/* Priority bottom sheet icons */
+.priority-sheet-btn {
+  background: none;
+  border: none;
+  font-size: 44px;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: transform 0.1s;
+}
+.priority-sheet-btn:hover,
+.priority-sheet-btn:active { transform: scale(1.2); }
+
+/* Mobile color trigger button — hidden on desktop, shown on coarse */
+.color-mobile-btn {
+  display: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.color-mobile-btn:hover { transform: scale(1.15); border-color: var(--text); }
+
+/* Color bottom sheet */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+.bottom-sheet {
+  width: 100%;
+  background: var(--bg-2);
+  border-top: 1px solid var(--border-color);
+  border-radius: 16px 16px 0 0;
+  padding: 24px 16px 32px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+.color-sheet-swatch {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.1s;
+}
+.color-sheet-swatch:hover,
+.color-sheet-swatch:active { transform: scale(1.2); border-color: var(--text); }
+
 /* Today button */
 .today-btn {
   display: flex;
@@ -795,4 +853,8 @@ body {
   .date-header { padding: 0.75rem; }
   .nav-arrow { font-size: 2rem; padding: 0.5rem 1.2rem; }
   .search-modal { min-width: unset; width: 90vw; }
+  .swatches-row { display: none; }
+  .color-mobile-btn { display: block; }
+  .priority-desktop-group { display: none; }
+  .priority-mobile-btn { display: flex; align-items: center; justify-content: center; }
 }

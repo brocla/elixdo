@@ -37,7 +37,10 @@ defmodule ElixdoWeb.ListLive do
      |> assign(:arrow_item_ids, [])
      |> assign(:search_open, false)
      |> assign(:search_results, [])
-     |> assign(:highlighted_item_id, nil)}
+     |> assign(:highlighted_item_id, nil)
+     |> assign(:color_sheet_open, false)
+     |> assign(:last_color, :blue)
+     |> assign(:priority_sheet_open, false)}
   end
 
   @impl true
@@ -171,6 +174,14 @@ defmodule ElixdoWeb.ListLive do
 
   @valid_priorities ["❶", "❷", "❸", "⭐", "🔥"]
 
+  def handle_event("open_priority_sheet", _, socket) do
+    {:noreply, assign(socket, :priority_sheet_open, true)}
+  end
+
+  def handle_event("close_priority_sheet", _, socket) do
+    {:noreply, assign(socket, :priority_sheet_open, false)}
+  end
+
   def handle_event("set_priority", %{"priority" => p}, socket)
       when p in @valid_priorities do
     selected_items =
@@ -180,7 +191,7 @@ defmodule ElixdoWeb.ListLive do
       Lists.update_item(item, %{priority: p})
     end)
 
-    {:noreply, clear_selection(socket)}
+    {:noreply, socket |> assign(:priority_sheet_open, false) |> clear_selection()}
   end
 
   def handle_event("set_status", %{"status" => status_str}, socket)
@@ -217,6 +228,38 @@ defmodule ElixdoWeb.ListLive do
     end)
 
     {:noreply, clear_selection(socket)}
+  end
+
+  # Mobile color sheet
+  def handle_event("open_color_sheet", _, socket) do
+    {:noreply, assign(socket, :color_sheet_open, true)}
+  end
+
+  def handle_event("close_color_sheet", _, socket) do
+    {:noreply, assign(socket, :color_sheet_open, false)}
+  end
+
+  def handle_event("set_color", %{"color" => color_str}, socket)
+      when color_str in @valid_color_strings do
+    color = String.to_existing_atom(color_str)
+
+    selected_items =
+      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+
+    Enum.each(selected_items, fn item ->
+      Lists.update_item(item, %{color: color})
+    end)
+
+    {:noreply,
+     socket
+     |> assign(:color_sheet_open, false)
+     |> assign(:last_color, color)
+     |> clear_selection()
+    }
+  end
+
+  def handle_event("set_color", _, socket) do
+    {:noreply, assign(socket, :color_sheet_open, false)}
   end
 
   # Remove all formats + restore active status (except arrowed_out, which cannot transition)

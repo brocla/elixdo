@@ -3,7 +3,6 @@
 #   On Windows: Win + . opens the emoji picker
 #   On Mac: Cmd + Ctrl + Space
 
-
 defmodule Elixdo.Emoji do
   @moduledoc "Converts :shortcode: patterns to emoji characters."
 

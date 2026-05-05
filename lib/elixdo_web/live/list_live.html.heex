@@ -55,14 +55,18 @@
         </div>
 
         <%# ── Priority handle decorations ───────────────────────── %>
-        <div class="tb-group">
+        <button type="button" phx-click="open_priority_sheet"
+                class="priority-mobile-btn toolbar-btn" title="Priority">⭐</button>
+        <div class="tb-group priority-desktop-group">
           <%= for p <- ["❶", "❷", "❸", "⭐", "🔥"] do %>
             <button type="button" phx-click="set_priority" phx-value-priority={p}
                     class="toolbar-btn priority-btn" title={"Priority #{p}"}>{p}</button>
           <% end %>
         </div>
 
-        <%# ── Color swatches ────────────────────────────────────── %>
+        <%# ── Color swatches (desktop) + mobile trigger ─────────── %>
+        <button type="button" phx-click="open_color_sheet"
+                class={"color-mobile-btn swatch-#{@last_color}"} title="Color"></button>
         <div class="swatches-row">
           <button type="button" phx-click="set_decoration" phx-value-field="color"
                   phx-value-setting="red" class="color-swatch swatch-red" title="Red"></button>
@@ -181,6 +185,30 @@
           <button type="submit">Arrow</button>
           <button type="button" phx-click="cancel_arrow">Cancel</button>
         </form>
+      </div>
+    </div>
+  <% end %>
+
+  <%# ── Priority bottom sheet (mobile) ──────────────────────────────── %>
+  <%= if @priority_sheet_open do %>
+    <div class="bottom-sheet-overlay" phx-click="close_priority_sheet">
+      <div class="bottom-sheet">
+        <%= for p <- ["❶", "❷", "❸", "⭐", "🔥"] do %>
+          <button type="button" phx-click="set_priority" phx-value-priority={p}
+                  class="priority-sheet-btn" title={"Priority #{p}"}>{p}</button>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# ── Color bottom sheet (mobile) ─────────────────────────────────── %>
+  <%= if @color_sheet_open do %>
+    <div class="bottom-sheet-overlay" phx-click="close_color_sheet">
+      <div class="bottom-sheet">
+        <%= for color <- [:red, :blue, :green, :purple, :orange] do %>
+          <button type="button" phx-click="set_color" phx-value-color={color}
+                  class={"color-sheet-swatch swatch-#{color}"}></button>
+        <% end %>
       </div>
     </div>
   <% end %>
