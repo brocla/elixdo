@@ -216,6 +216,89 @@ defmodule ElixdoWeb.Api.McpControllerTest do
   end
 
   # ---------------------------------------------------------------------------
+  # list_items_range
+  # ---------------------------------------------------------------------------
+
+  test "list_items_range returns items across a date range", %{conn: conn} do
+    insert_item(date: ~D[2026-11-14], body: "day one")
+    insert_item(date: ~D[2026-11-15], body: "day two")
+    insert_item(date: ~D[2026-11-16], body: "outside range")
+
+    resp =
+      mcp(conn, "tools/call", %{
+        "name" => "list_items_range",
+        "arguments" => %{"from" => "2026-11-14", "to" => "2026-11-15"}
+      })
+      |> json_response(200)
+
+    text = resp["result"]["content"] |> hd() |> Map.fetch!("text")
+    items = Jason.decode!(text)
+    bodies = Enum.map(items, & &1["body"])
+    assert "day one" in bodies
+    assert "day two" in bodies
+    refute "outside range" in bodies
+  end
+
+  test "list_items_range with status filter returns only matching items", %{conn: conn} do
+    {:ok, [active]} = Lists.create_items(~D[2026-11-17], [%{body: "still active"}])
+    {:ok, [done]} = Lists.create_items(~D[2026-11-17], [%{body: "all done"}])
+    Lists.update_item(done, %{status: :completed})
+
+    resp =
+      mcp(conn, "tools/call", %{
+        "name" => "list_items_range",
+        "arguments" => %{"from" => "2026-11-17", "to" => "2026-11-17", "statuses" => ["active"]}
+      })
+      |> json_response(200)
+
+    text = resp["result"]["content"] |> hd() |> Map.fetch!("text")
+    items = Jason.decode!(text)
+    bodies = Enum.map(items, & &1["body"])
+    assert "still active" in bodies
+    refute "all done" in bodies
+    _ = active
+  end
+
+  # ---------------------------------------------------------------------------
+  # SSE (Streamable HTTP) transport
+  # ---------------------------------------------------------------------------
+
+  test "responds with SSE format when Accept: text/event-stream", %{conn: conn} do
+    body = Jason.encode!(%{jsonrpc: "2.0", id: 1, method: "initialize", params: %{}})
+
+    conn =
+      conn
+      |> put_req_header("authorization", "Bearer #{@token}")
+      |> put_req_header("content-type", "application/json")
+      |> put_req_header("accept", "text/event-stream")
+      |> post("/api/v1/mcp", body)
+
+    assert conn.status == 200
+    assert get_resp_header(conn, "content-type") |> hd() =~ "text/event-stream"
+    assert conn.resp_body =~ "event: message\ndata: "
+    payload = conn.resp_body |> String.split("data: ") |> List.last() |> String.trim()
+    decoded = Jason.decode!(payload)
+    assert decoded["result"]["protocolVersion"] == "2024-11-05"
+  end
+
+  # ---------------------------------------------------------------------------
+  # Notifications
+  # ---------------------------------------------------------------------------
+
+  test "notifications (no id) return 204 with empty body", %{conn: conn} do
+    body = Jason.encode!(%{jsonrpc: "2.0", method: "notifications/initialized", params: %{}})
+
+    conn =
+      conn
+      |> put_req_header("authorization", "Bearer #{@token}")
+      |> put_req_header("content-type", "application/json")
+      |> post("/api/v1/mcp", body)
+
+    assert conn.status == 204
+    assert conn.resp_body == ""
+  end
+
+  # ---------------------------------------------------------------------------
   # Error cases
   # ---------------------------------------------------------------------------
 
