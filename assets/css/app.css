@@ -225,6 +225,7 @@ body {
   line-height: 1;
 }
 .toolbar-btn:hover { background: var(--bg-4); color: white; }
+.priority-btn { color: var(--text); font-size: 22px; padding: 0 4px; min-width: unset; }
 
 /* Select-all button — ring matches item-select-btn */
 .select-btn {
@@ -264,8 +265,9 @@ body {
   pointer-events: none;
 }
 
-/* Search button */
-.search-btn {
+/* Search and sort buttons */
+.search-btn,
+.sort-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -278,7 +280,8 @@ body {
   cursor: pointer;
   transition: all 0.12s;
 }
-.search-btn:hover { border-color: var(--accent); color: white; }
+.search-btn:hover,
+.sort-btn:hover { border-color: var(--accent); color: white; }
 
 /* Color swatches row — same 40px height */
 .swatches-row {
@@ -497,6 +500,14 @@ body {
 .item:hover .drag-handle { opacity: 1; }
 .drag-handle:active { cursor: grabbing; }
 .drag-ghost { opacity: 0.35; }
+
+/* Priority character: always visible, full color, slightly larger than ⠿ */
+.drag-handle.drag-handle--priority {
+  opacity: 1;
+  color: var(--text);
+  font-size: 20px;
+  transition: none;
+}
 
 /* ─── Per-item select button ────────────────────────────────────────── */
 
@@ -775,9 +786,11 @@ body {
   .item { padding: 16px 14px 16px 16px; gap: 12px; }
   .item-body { font-size: 22px; line-height: 1.25; }
   .drag-handle { opacity: 0.4; font-size: 20px; padding: 0 0.6rem; min-width: 2rem; text-align: center; }
+  .drag-handle.drag-handle--priority { opacity: 1; font-size: 26px; }
   .item-select-btn { width: 32px; height: 32px; }
   .item-select-btn.selected::after { width: 8px; height: 8px; }
   .toolbar-btn { min-width: 40px; height: 38px; }
+  .priority-btn { font-size: 22px; padding: 0 4px; min-width: unset; }
   .add-item-input { font-size: 1.1rem; padding: 0.75rem; }
   .date-header { padding: 0.75rem; }
   .nav-arrow { font-size: 2rem; padding: 0.5rem 1.2rem; }

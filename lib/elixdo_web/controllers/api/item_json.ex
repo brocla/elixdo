@@ -10,6 +10,7 @@ defmodule ElixdoWeb.Api.ItemJSON do
       status: to_string(item.status),
       position: item.position,
       color: item.color && to_string(item.color),
+      priority: item.priority,
       arrowed_to_date: item.arrowed_to_date && Date.to_iso8601(item.arrowed_to_date),
       inserted_at: format_datetime(item.inserted_at),
       updated_at: format_datetime(item.updated_at)

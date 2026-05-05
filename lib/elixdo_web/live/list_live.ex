@@ -169,6 +169,20 @@ defmodule ElixdoWeb.ListLive do
   @valid_colors Ecto.Enum.values(Elixdo.ListItem, :color)
   @valid_color_strings Enum.map(@valid_colors, &Atom.to_string/1)
 
+  @valid_priorities ["❶", "❷", "❸", "⭐", "🔥"]
+
+  def handle_event("set_priority", %{"priority" => p}, socket)
+      when p in @valid_priorities do
+    selected_items =
+      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+
+    Enum.each(selected_items, fn item ->
+      Lists.update_item(item, %{priority: p})
+    end)
+
+    {:noreply, socket}
+  end
+
   def handle_event("set_status", %{"status" => status_str}, socket)
       when status_str in @valid_status_strings do
     status = String.to_existing_atom(status_str)
@@ -213,6 +227,7 @@ defmodule ElixdoWeb.ListLive do
     Enum.each(selected_items, fn item ->
       Lists.update_item(item, %{
         color: nil,
+        priority: nil,
         status: :active,
         arrowed_to_date: nil
       })
@@ -262,6 +277,15 @@ defmodule ElixdoWeb.ListLive do
   def handle_event("reorder", %{"order" => ids}, socket) do
     int_ids = Enum.map(ids, &String.to_integer(to_string(&1)))
     Lists.reorder_items(socket.assigns.date, int_ids)
+    {:noreply, socket}
+  end
+
+  def handle_event("sort_active", _, socket) do
+    {active, non_active} =
+      Enum.split_with(socket.assigns.items, &(&1.status == :active))
+
+    new_ids = Enum.map(active ++ non_active, & &1.id)
+    Lists.reorder_items(socket.assigns.date, new_ids)
     {:noreply, socket}
   end
 

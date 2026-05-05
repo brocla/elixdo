@@ -14,6 +14,16 @@
             <line x1="11.5" y1="11.5" x2="16" y2="16"/>
           </svg>
         </button>
+
+        <%# Sort active-first %>
+        <button type="button" phx-click="sort_active" class="sort-btn" title="Sort by status">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="2" x2="5" y2="16"/>
+            <polyline points="2,5 5,2 8,5"/>
+            <line x1="13" y1="2" x2="13" y2="16"/>
+            <polyline points="10,13 13,16 16,13"/>
+          </svg>
+        </button>
       </div>
 
       <div class="toolbar-actions">
@@ -42,6 +52,14 @@
               <polyline points="10,4 16,10 10,16"/>
             </svg>
           </button>
+        </div>
+
+        <%# ── Priority handle decorations ───────────────────────── %>
+        <div class="tb-group">
+          <%= for p <- ["❶", "❷", "❸", "⭐", "🔥"] do %>
+            <button type="button" phx-click="set_priority" phx-value-priority={p}
+                    class="toolbar-btn priority-btn" title={"Priority #{p}"}>{p}</button>
+          <% end %>
         </div>
 
         <%# ── Color swatches ────────────────────────────────────── %>
@@ -112,7 +130,7 @@
           class={["item", item_class(item), color_item_class(item), if(@highlighted_item_id == item.id, do: "search-highlight")] |> Enum.reject(&is_nil/1) |> Enum.join(" ")}
           data-id={item.id}
         >
-          <span class="drag-handle">⠿</span>
+          <span class={["drag-handle", item.priority && "drag-handle--priority"]}>{item.priority || "⠿"}</span>
 
           <%# Per-item select circle — no text, uses CSS ::after for fill dot %>
           <button
