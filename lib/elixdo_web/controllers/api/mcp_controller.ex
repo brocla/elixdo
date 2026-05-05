@@ -9,7 +9,7 @@ defmodule ElixdoWeb.Api.McpController do
   # ---------------------------------------------------------------------------
 
   def handle(conn, %{"method" => "initialize", "id" => id}) do
-    json(conn, %{
+    respond(conn, %{
       jsonrpc: "2.0",
       id: id,
       result: %{
@@ -21,7 +21,7 @@ defmodule ElixdoWeb.Api.McpController do
   end
 
   def handle(conn, %{"method" => "tools/list", "id" => id}) do
-    json(conn, %{jsonrpc: "2.0", id: id, result: %{tools: tool_definitions()}})
+    respond(conn, %{jsonrpc: "2.0", id: id, result: %{tools: tool_definitions()}})
   end
 
   def handle(conn, %{
@@ -30,7 +30,7 @@ defmodule ElixdoWeb.Api.McpController do
         "params" => %{"name" => name, "arguments" => args}
       }) do
     result = dispatch(name, args)
-    json(conn, %{
+    respond(conn, %{
       jsonrpc: "2.0",
       id: id,
       result: %{content: [%{type: "text", text: Jason.encode!(result)}]}
@@ -38,7 +38,7 @@ defmodule ElixdoWeb.Api.McpController do
   end
 
   def handle(conn, %{"id" => id}) do
-    json(conn, %{
+    respond(conn, %{
       jsonrpc: "2.0",
       id: id,
       error: %{code: -32601, message: "Method not found"}
@@ -48,6 +48,25 @@ defmodule ElixdoWeb.Api.McpController do
   # JSON-RPC notifications have no "id" — acknowledge with 204, no body.
   def handle(conn, _params) do
     send_resp(conn, 204, "")
+  end
+
+  # ---------------------------------------------------------------------------
+  # Streamable HTTP transport: respond as SSE or plain JSON based on Accept
+  # ---------------------------------------------------------------------------
+
+  defp respond(conn, payload) do
+    accept = get_req_header(conn, "accept") |> List.first("")
+
+    if String.contains?(accept, "text/event-stream") do
+      data = Jason.encode!(payload)
+
+      conn
+      |> put_resp_content_type("text/event-stream")
+      |> put_resp_header("cache-control", "no-cache")
+      |> send_resp(200, "event: message\ndata: #{data}\n\n")
+    else
+      json(conn, payload)
+    end
   end
 
   # ---------------------------------------------------------------------------
