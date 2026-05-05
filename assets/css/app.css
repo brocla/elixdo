@@ -717,6 +717,30 @@ body {
 .add-btn:hover { background: var(--accent-dim); }
 .add-btn:active { transform: scale(0.97); }
 
+.mic-btn {
+  padding: 0 12px;
+  align-self: stretch;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+.mic-btn:hover { background: var(--bg-3); color: var(--text); }
+.mic-btn.mic-recording {
+  color: #e53;
+  animation: mic-pulse 1s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 /* ═══════════════════════════════════════════════════════════════════════
    MODALS
    ═══════════════════════════════════════════════════════════════════════ */

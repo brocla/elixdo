@@ -126,6 +126,17 @@ defmodule ElixdoWeb.ListLive do
     {:noreply, assign(socket, :selected, selected)}
   end
 
+  # Voice input
+  def handle_event("voice_input", %{"text" => text}, socket) do
+    text = text |> String.trim() |> Emoji.convert()
+
+    if text != "" do
+      Lists.create_items(socket.assigns.date, [%{body: text}])
+    end
+
+    {:noreply, socket}
+  end
+
   # Add item
   def handle_event("add_item", %{"body" => body}, socket) do
     body = body |> String.trim() |> Emoji.convert()
