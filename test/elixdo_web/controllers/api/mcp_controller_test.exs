@@ -174,6 +174,48 @@ defmodule ElixdoWeb.Api.McpControllerTest do
   end
 
   # ---------------------------------------------------------------------------
+  # Emoji shortcode conversion
+  # ---------------------------------------------------------------------------
+
+  test "add_item converts shortcodes in body", %{conn: conn} do
+    mcp(conn, "tools/call", %{
+      "name" => "add_item",
+      "arguments" => %{"date" => "2026-11-13", "body" => "buy :coffee: and :pizza:"}
+    })
+    |> json_response(200)
+
+    [item] = Lists.get_items_for_date(~D[2026-11-13])
+    assert item.body == "buy ☕ and 🍕"
+  end
+
+  test "update_item converts shortcodes in body", %{conn: conn} do
+    item = insert_item(date: @date, body: "plain text")
+
+    mcp(conn, "tools/call", %{
+      "name" => "update_item",
+      "arguments" => %{"id" => item.id, "body" => "on :fire: today"}
+    })
+    |> json_response(200)
+
+    [updated] = Lists.get_items_for_date(@date) |> Enum.filter(&(&1.id == item.id))
+    assert updated.body == "on 🔥 today"
+  end
+
+  test "update_item without body field is unaffected by shortcode conversion", %{conn: conn} do
+    item = insert_item(date: @date, body: "no change")
+
+    mcp(conn, "tools/call", %{
+      "name" => "update_item",
+      "arguments" => %{"id" => item.id, "status" => "completed"}
+    })
+    |> json_response(200)
+
+    [updated] = Lists.get_items_for_date(@date) |> Enum.filter(&(&1.id == item.id))
+    assert updated.body == "no change"
+    assert updated.status == :completed
+  end
+
+  # ---------------------------------------------------------------------------
   # Error cases
   # ---------------------------------------------------------------------------
 
