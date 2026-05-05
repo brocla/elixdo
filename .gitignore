@@ -41,3 +41,8 @@ npm-debug.log
 
 .secrets.txt
 .claude/
+
+# my notes
+elixdo*.md
+db_deletes.md
+MCP_SERVER_PLAN.md
