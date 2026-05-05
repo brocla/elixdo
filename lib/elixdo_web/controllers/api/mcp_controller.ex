@@ -45,6 +45,11 @@ defmodule ElixdoWeb.Api.McpController do
     })
   end
 
+  # JSON-RPC notifications have no "id" — acknowledge with 204, no body.
+  def handle(conn, _params) do
+    send_resp(conn, 204, "")
+  end
+
   # ---------------------------------------------------------------------------
   # Tool dispatcher
   # ---------------------------------------------------------------------------
