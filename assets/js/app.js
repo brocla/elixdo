@@ -28,6 +28,7 @@ import Swipe from "./swipe"
 import AddItem from "./add_item"
 import EditItem from "./edit_item"
 import DragSort from "./drag_sort"
+import VoiceInput from "./voice_input"
 
 const SearchFocus = {
   mounted() { this.el.focus() }
@@ -39,6 +40,7 @@ Hooks.AddItem = AddItem
 Hooks.EditItem = EditItem
 Hooks.DragSort = DragSort
 Hooks.SearchFocus = SearchFocus
+Hooks.VoiceInput = VoiceInput
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {

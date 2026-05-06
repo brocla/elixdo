@@ -16,7 +16,10 @@ defmodule ElixdoWeb.ApiAuthPlug do
       _ ->
         conn
         |> put_resp_content_type("application/json")
-        |> send_resp(401, Jason.encode!(%{error: %{code: "unauthorized", message: "Invalid or missing token"}}))
+        |> send_resp(
+          401,
+          Jason.encode!(%{error: %{code: "unauthorized", message: "Invalid or missing token"}})
+        )
         |> halt()
     end
   end

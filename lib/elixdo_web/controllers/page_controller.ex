@@ -1,4 +1,5 @@
 defmodule ElixdoWeb.PageController do
+  @moduledoc false
   use ElixdoWeb, :controller
 
   def index(conn, _params) do

@@ -148,23 +148,26 @@ defmodule Elixdo.ListsTest do
     end
 
     test "allows same-status no-op active -> active (so format fields can be cleared)" do
-      item = insert_item(%{bold: true})
-      assert {:ok, updated} = Lists.update_item(item, %{status: :active, bold: false})
+      item = insert_item(%{color: :red})
+      assert {:ok, updated} = Lists.update_item(item, %{status: :active, color: nil})
       assert updated.status == :active
-      assert updated.bold == false
+      assert updated.color == nil
     end
 
     test "forbids invalid transition completed -> completed" do
       item = insert_item()
       {:ok, completed} = Lists.update_item(item, %{status: :completed})
-      assert {:ok, updated} = Lists.update_item(completed, %{status: :completed, bold: false})
+      assert {:ok, updated} = Lists.update_item(completed, %{status: :completed, color: nil})
       assert updated.status == :completed
     end
 
     test "allows arrowed_out -> active (remove formats undoes arrow)" do
       item = insert_item()
       {:ok, arrowed, _copy} = Lists.arrow_item(item, ~D[2026-09-01])
-      assert {:ok, restored} = Lists.update_item(arrowed, %{status: :active, arrowed_to_date: nil})
+
+      assert {:ok, restored} =
+               Lists.update_item(arrowed, %{status: :active, arrowed_to_date: nil})
+
       assert restored.status == :active
       assert restored.arrowed_to_date == nil
     end
@@ -183,18 +186,19 @@ defmodule Elixdo.ListsTest do
     end
 
     test "allows clearing arrowed_to_date together with status: active (remove formats path)" do
-      item = insert_item(%{bold: true, italic: true})
+      item = insert_item(%{color: :blue})
       {:ok, arrowed, _copy} = Lists.arrow_item(item, ~D[2026-09-01])
+
       assert {:ok, restored} =
                Lists.update_item(arrowed, %{
                  status: :active,
                  arrowed_to_date: nil,
-                 bold: false,
-                 italic: false
+                 color: nil
                })
+
       assert restored.status == :active
       assert restored.arrowed_to_date == nil
-      assert restored.bold == false
+      assert restored.color == nil
     end
 
     test "forbids arrowed_out -> completed" do
@@ -221,21 +225,10 @@ defmodule Elixdo.ListsTest do
       assert copy.status == :active
     end
 
-    test "preserves item formatting on copy" do
-      {:ok, [item]} =
-        Lists.create_items(@date, [
-          %{
-            body: "formatted",
-            bold: true,
-            italic: true,
-            highlighted: true
-          }
-        ])
-
+    test "preserves color on copy" do
+      {:ok, [item]} = Lists.create_items(@date, [%{body: "colored", color: :green}])
       assert {:ok, _original, copy} = Lists.arrow_item(item, @date2)
-      assert copy.bold == true
-      assert copy.italic == true
-      assert copy.highlighted == true
+      assert copy.color == :green
     end
 
     test "forbids arrow on completed item" do

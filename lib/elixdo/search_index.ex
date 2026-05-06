@@ -49,7 +49,6 @@ defmodule Elixdo.SearchIndex do
     results =
       :ets.tab2list(:search_index)
       |> Enum.filter(fn {_id, _date, body} -> String.contains?(body, query) end)
-      |> Enum.map(fn {id, date, body} -> {id, date, body} end)
 
     {:reply, results, state}
   end

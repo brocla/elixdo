@@ -20,6 +20,11 @@ defmodule ElixdoWeb.Router do
     plug ElixdoWeb.ApiAuthPlug
   end
 
+  # MCP handles its own content negotiation (JSON and SSE), so no :accepts plug here
+  pipeline :mcp_auth do
+    plug ElixdoWeb.ApiAuthPlug
+  end
+
   scope "/" do
     pipe_through :api
     get "/manifest.json", ElixdoWeb.ManifestController, :show
@@ -35,6 +40,11 @@ defmodule ElixdoWeb.Router do
     patch "/lists/:date/reorder", ListController, :reorder
     patch "/items/:id", ItemController, :update
     post "/items/:id/arrow", ItemController, :arrow
+  end
+
+  scope "/api/v1", ElixdoWeb.Api do
+    pipe_through :mcp_auth
+    post "/mcp", McpController, :handle
   end
 
   scope "/:secret", ElixdoWeb do

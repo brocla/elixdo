@@ -1,8 +1,9 @@
 defmodule ElixdoWeb.Api.ItemController do
+  @moduledoc false
   use ElixdoWeb, :controller
 
-  alias Elixdo.{Lists, DateHelper, Repo, ListItem}
-  alias ElixdoWeb.Api.ItemJSON
+  alias Elixdo.{Lists, DateHelper}
+  alias ElixdoWeb.Api.{ItemJSON, Helpers}
 
   # PATCH /api/v1/items/:id
   def update(conn, %{"id" => id} = params) do
@@ -19,7 +20,9 @@ defmodule ElixdoWeb.Api.ItemController do
       {:error, :forbidden_transition} ->
         conn
         |> put_status(422)
-        |> json(%{error: %{code: "forbidden_transition", message: "Status transition is not allowed"}})
+        |> json(%{
+          error: %{code: "forbidden_transition", message: "Status transition is not allowed"}
+        })
 
       {:error, changeset} ->
         conn
@@ -48,7 +51,9 @@ defmodule ElixdoWeb.Api.ItemController do
       {:error, :forbidden_transition} ->
         conn
         |> put_status(422)
-        |> json(%{error: %{code: "forbidden_transition", message: "Only active items can be arrowed"}})
+        |> json(%{
+          error: %{code: "forbidden_transition", message: "Only active items can be arrowed"}
+        })
 
       {:error, _} ->
         conn
@@ -63,10 +68,5 @@ defmodule ElixdoWeb.Api.ItemController do
     |> json(%{error: %{code: "validation_error", message: "target_date is required"}})
   end
 
-  defp fetch_item(id) do
-    case Repo.get(ListItem, id) do
-      nil -> {:error, :not_found}
-      item -> {:ok, item}
-    end
-  end
+  defp fetch_item(id), do: Helpers.fetch_item(id)
 end

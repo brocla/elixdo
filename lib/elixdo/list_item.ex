@@ -1,6 +1,10 @@
 defmodule Elixdo.ListItem do
+  @moduledoc "Ecto schema for a single task item. Defines fields, enums, and validation rules."
+
   use Ecto.Schema
   import Ecto.Changeset
+
+  @valid_priorities ["❶", "❷", "❸", "⭐", "🔥"]
 
   schema "list_items" do
     field :date, :date
@@ -12,14 +16,15 @@ defmodule Elixdo.ListItem do
       default: :active
 
     field :color, Ecto.Enum, values: [:red, :blue, :green, :purple, :orange]
-    field :bold, :boolean, default: false
-    field :italic, :boolean, default: false
-    field :highlighted, :boolean, default: false
-    field :prefix, :string
+    field :priority, :string
     field :arrowed_to_date, :date
 
     timestamps(type: :utc_datetime)
   end
+
+  def colors, do: Ecto.Enum.values(__MODULE__, :color)
+  def color_strings, do: Enum.map(colors(), &Atom.to_string/1)
+  def priorities, do: @valid_priorities
 
   def changeset(item, attrs) do
     item
@@ -29,15 +34,21 @@ defmodule Elixdo.ListItem do
       :body,
       :status,
       :color,
-      :bold,
-      :italic,
-      :highlighted,
-      :prefix,
+      :priority,
       :arrowed_to_date
     ])
     |> validate_required([:date, :position, :body])
     |> validate_length(:body, min: 1)
+    |> validate_priority()
     |> validate_arrowed_to_date_consistency()
+  end
+
+  defp validate_priority(changeset) do
+    case get_change(changeset, :priority) do
+      nil -> changeset
+      p when p in @valid_priorities -> changeset
+      _ -> add_error(changeset, :priority, "must be one of #{Enum.join(@valid_priorities, ", ")}")
+    end
   end
 
   # arrowed_to_date must be set iff status is arrowed_out

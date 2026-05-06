@@ -81,11 +81,7 @@ defmodule ElixdoWeb.Api.ListControllerTest do
       assert result["body"] == "test item"
       assert result["status"] == "active"
       assert result["position"] == 1
-      assert result["bold"] == false
-      assert result["italic"] == false
-      assert result["highlighted"] == false
       assert result["color"] == nil
-      assert result["prefix"] == nil
       assert result["arrowed_to_date"] == nil
       assert String.ends_with?(result["inserted_at"], "Z")
       assert String.ends_with?(result["updated_at"], "Z")

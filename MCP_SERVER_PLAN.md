@@ -6,156 +6,268 @@ Add an embedded MCP (Model Context Protocol) controller that allows an AI like C
 
 ---
 
-## Step 1 — Add the MCP route
+## What was actually built (post-implementation notes)
 
-In `lib/elixdo_web/router.ex`, add one line inside the existing `api_auth` scope:
+This document was rewritten after the implementation was complete. The original plan had several gaps that only became apparent during integration testing with Claude Code. The sections below reflect what it actually takes to get a working MCP server.
+
+---
+
+## Step 1 — Add the MCP route in a dedicated scope
+
+The MCP endpoint must NOT share the `:api_auth` pipeline with the other API routes. The reason: the `:api_auth` pipeline uses `plug :accepts, ["json"]`, which causes Phoenix to return **406 Not Acceptable** when Claude Code sends `Accept: text/event-stream` — which it does for every request, as required by the MCP Streamable HTTP transport spec.
+
+The fix is a separate pipeline with no `:accepts` plug, since the MCP controller handles its own content negotiation:
 
 ```elixir
+# MCP handles its own content negotiation (JSON and SSE), so no :accepts plug here
+pipeline :mcp_auth do
+  plug ElixdoWeb.ApiAuthPlug
+end
+
 scope "/api/v1", ElixdoWeb.Api do
   pipe_through :api_auth
-
   # ... existing routes ...
-  post "/mcp", McpController, :handle   # ← add this
+end
+
+scope "/api/v1", ElixdoWeb.Api do
+  pipe_through :mcp_auth
+  post "/mcp", McpController, :handle
 end
 ```
 
-The MCP endpoint reuses the same `ApiAuthPlug` and `AGENT_TOKEN` already in place. No new auth work needed.
+**Do not** try to add `"event-stream"` to the accepts list — `text/event-stream` is not registered in Phoenix's MIME registry by default and will not work.
 
 ---
 
-## Step 2 — Create `mcp_controller.ex`
+## Step 2 — Implement the Streamable HTTP transport
 
-Create `lib/elixdo_web/controllers/api/mcp_controller.ex`. It handles JSON-RPC 2.0 dispatch:
+Claude Code uses the **MCP Streamable HTTP transport**, which requires the server to check the `Accept` request header and respond in either plain JSON or SSE format accordingly.
+
+When the client sends `Accept: text/event-stream`, the response must be:
+```
+Content-Type: text/event-stream
+Cache-Control: no-cache
+
+event: message
+data: {"jsonrpc":"2.0","id":1,"result":{...}}
+
+```
+
+Note the blank line at the end (`\n\n`) — that terminates the SSE event.
+
+Use a private `respond/2` helper in the controller so all clauses stay clean:
 
 ```elixir
-defmodule ElixdoWeb.Api.McpController do
-  use ElixdoWeb, :controller
-  alias Elixdo.{Lists, SearchIndex, Clock, DateHelper}
+defp respond(conn, payload) do
+  accept = get_req_header(conn, "accept") |> List.first("")
 
-  def handle(conn, %{"method" => "initialize", "id" => id}) do
-    json(conn, %{
-      jsonrpc: "2.0", id: id,
-      result: %{
-        protocolVersion: "2024-11-05",
-        serverInfo: %{name: "elixdo", version: "1.0"},
-        capabilities: %{tools: %{}}
-      }
-    })
+  if String.contains?(accept, "text/event-stream") do
+    data = Jason.encode!(payload)
+    conn
+    |> put_resp_content_type("text/event-stream")
+    |> put_resp_header("cache-control", "no-cache")
+    |> send_resp(200, "event: message\ndata: #{data}\n\n")
+  else
+    json(conn, payload)
   end
+end
+```
 
-  def handle(conn, %{"method" => "tools/list", "id" => id}) do
-    json(conn, %{jsonrpc: "2.0", id: id, result: %{tools: tool_definitions()}})
-  end
+Call `respond/2` instead of `json/2` in every handler clause.
 
-  def handle(conn, %{"method" => "tools/call", "id" => id,
-                     "params" => %{"name" => name, "arguments" => args}}) do
-    result = dispatch(name, args)
-    json(conn, %{jsonrpc: "2.0", id: id, result: %{content: [%{type: "text", text: Jason.encode!(result)}]}})
-  end
+---
 
-  def handle(conn, %{"id" => id}) do
-    json(conn, %{jsonrpc: "2.0", id: id,
-      error: %{code: -32601, message: "Method not found"}})
-  end
+## Step 3 — Handle JSON-RPC notifications (no `id` field)
+
+After `initialize`, Claude Code sends a `notifications/initialized` notification. JSON-RPC notifications have no `id` field. If your catch-all handler pattern-matches on `%{"id" => id}`, it will not match and Phoenix will return **400 Bad Request**, breaking the handshake.
+
+Add a final catch-all that returns **204 No Content** for all notifications:
+
+```elixir
+# JSON-RPC notifications have no "id" — acknowledge with 204, no body.
+def handle(conn, _params) do
+  send_resp(conn, 204, "")
+end
+```
+
+This must be the last `handle/2` clause. The MCP handshake will fail silently without it.
+
+---
+
+## Step 4 — Implement the JSON-RPC 2.0 dispatch
+
+The controller handles four cases: `initialize`, `tools/list`, `tools/call`, and the unknown-method fallback (before the notification catch-all):
+
+```elixir
+def handle(conn, %{"method" => "initialize", "id" => id}) do
+  respond(conn, %{
+    jsonrpc: "2.0", id: id,
+    result: %{
+      protocolVersion: "2024-11-05",
+      serverInfo: %{name: "elixdo", version: "1.0"},
+      capabilities: %{tools: %{}}
+    }
+  })
+end
+
+def handle(conn, %{"method" => "tools/list", "id" => id}) do
+  respond(conn, %{jsonrpc: "2.0", id: id, result: %{tools: tool_definitions()}})
+end
+
+def handle(conn, %{"method" => "tools/call", "id" => id,
+                   "params" => %{"name" => name, "arguments" => args}}) do
+  result = dispatch(name, args)
+  respond(conn, %{
+    jsonrpc: "2.0", id: id,
+    result: %{content: [%{type: "text", text: Jason.encode!(result)}]}
+  })
+end
+
+def handle(conn, %{"id" => id}) do
+  respond(conn, %{jsonrpc: "2.0", id: id,
+    error: %{code: -32601, message: "Method not found"}})
+end
+
+# Must be last — notifications have no "id"
+def handle(conn, _params) do
+  send_resp(conn, 204, "")
 end
 ```
 
 ---
 
-## Step 3 — Implement the tool dispatcher
+## Step 5 — Implement the tool dispatcher
 
-Still in `mcp_controller.ex`, add a private `dispatch/2` that maps tool names to `Lists` calls.
+The `dispatch/2` function maps tool names to `Lists` context calls. Key notes:
 
-### Tools to expose
+- **Emoji shortcode conversion**: `add_item` and `update_item` must call `Emoji.convert/1` on the body before storing — exactly as the LiveView handlers do. If you skip this, shortcodes like `:fire:` are stored as literal text.
+- **`update_item` body is optional**: use a private helper to only convert body when the key is present:
+  ```elixir
+  defp convert_body(%{"body" => body} = attrs), do: Map.put(attrs, "body", Emoji.convert(body))
+  defp convert_body(attrs), do: attrs
+  ```
+- **`search_items`**: `SearchIndex.search/1` returns `{id, date, body}` tuples, not `ListItem` structs. Serialize manually — do NOT pass to `ItemJSON.item/1`.
+- **`arrow_item`**: use `DateHelper.resolve/1` (not `Date.from_iso8601/1`) so relative strings like `"tomorrow"` work.
 
-| Tool name | Maps to | Purpose |
+### Tools exposed
+
+| Tool | Maps to | Notes |
 |---|---|---|
-| `get_today` | `Clock.today()` | AI needs to know the current date for relative operations |
-| `list_items` | `Lists.get_items_for_date(date)` | Get items for a specific date |
-| `list_items_range` | `Lists.get_items_for_range(from, to, statuses)` | Get items across a date range, optionally filtered by status |
-| `add_item` | `Lists.create_items(date, [%{body: body}])` | Add a new item |
-| `update_item` | `Repo.get(ListItem, id)` + `Lists.update_item(item, attrs)` | Edit body, status, color, bold, italic, highlighted, prefix |
-| `arrow_item` | `Repo.get` + `Lists.arrow_item(item, to_date)` | Move item forward to another date |
-| `search_items` | `SearchIndex.search(query)` | Full-text search across all items |
-
-Note: `update_item` and `arrow_item` need a `Repo.get` first — identical to what `ItemController` already does. Extract that into a shared private function or a helper in the `Lists` context.
+| `get_today` | `Clock.today()` | Returns `%{today: "2026-05-04"}` |
+| `list_items` | `Lists.get_items_for_date(date)` | |
+| `list_items_range` | `Lists.get_items_for_range(from, to, statuses)` | `statuses` is optional; map strings to atoms |
+| `add_item` | `Lists.create_items(date, [%{body: body}])` | Apply `Emoji.convert/1` first |
+| `update_item` | `Repo.get` + `Lists.update_item(item, attrs)` | Apply `Emoji.convert/1` to body if present |
+| `arrow_item` | `Repo.get` + `Lists.arrow_item(item, to_date)` | Use `DateHelper.resolve/1` for target date |
+| `search_items` | `SearchIndex.search(query)` | Returns tuples — serialize manually |
 
 ---
 
-## Step 4 — Define tool schemas
+## Step 6 — Register the server with Claude Code CLI
 
-The `tool_definitions()` function returns JSON Schema for each tool so the AI knows what arguments to pass. Example for `list_items`:
+**The `mcpServers` key in `~/.claude/settings.json` is ignored by Claude Code.** That file controls permissions and hooks only. MCP servers must be registered using the CLI command, which writes to `~/.claude.json`:
 
-```elixir
-%{
-  name: "list_items",
-  description: "Get all items for a specific date",
-  inputSchema: %{
-    type: "object",
-    properties: %{
-      date: %{type: "string", description: "ISO 8601 date, e.g. 2026-05-04"}
-    },
-    required: ["date"]
-  }
-}
+```sh
+claude mcp add --transport http --scope user elixdo \
+  https://yourapp.fly.dev/api/v1/mcp \
+  --header "Authorization: Bearer <AGENT_TOKEN>"
 ```
 
-Write one schema for each of the seven tools. The descriptions matter — they are how the AI decides which tool to call.
+Verify with:
+```sh
+claude mcp list
+```
+
+You should see `elixdo: ... (HTTP) - ✓ Connected`. If you see `✗ Failed to connect`, run through the troubleshooting section below.
+
+After registering, **start a new Claude Code session**. MCP servers are connected at session startup. Existing sessions will not see the new tools.
 
 ---
 
-## Step 5 — Set the `AGENT_TOKEN` environment variable
-
-The token already gates the `/api/v1` routes. On Fly.io:
+## Step 7 — Set the `AGENT_TOKEN` on Fly.io
 
 ```sh
 fly secrets set AGENT_TOKEN=<a long random string>
 ```
 
-Locally, add to `.env` or `config/dev.secret.exs`. The MCP client sends this as `Authorization: Bearer <token>`.
+The token gates the `/api/v1/mcp` route via the existing `ApiAuthPlug`. Verify it is set:
 
----
-
-## Step 6 — Configure Claude to use the MCP server
-
-### Claude Code CLI
-
-Add to `~/.claude/settings.json` (or the project-level `.claude/settings.json`):
-
-```json
-{
-  "mcpServers": {
-    "elixdo": {
-      "type": "http",
-      "url": "https://yourapp.fly.dev/api/v1/mcp",
-      "headers": {
-        "Authorization": "Bearer <AGENT_TOKEN>"
-      }
-    }
-  }
-}
+```sh
+fly secrets list --app <appname>
 ```
 
-### Claude.ai web app
-
-Go to Settings → Integrations → Add MCP server. Set the URL to `https://yourapp.fly.dev/api/v1/mcp` and add the bearer token in the headers field.
-
-After connecting, Claude will call `tools/list` automatically and discover the available tools. You can then say things like "add 'buy milk' to today's list" or "show me everything I marked complete last week."
-
 ---
 
-## What's not needed
-
-- No new authentication — `AGENT_TOKEN` already exists
-- No new context functions — `Lists` already exposes everything needed
-- No streaming/SSE — all operations are synchronous, plain JSON responses are sufficient
-- No second process or deployment — this lives in the existing Phoenix app
-
----
-
-## Files to change
+## Files changed
 
 | File | Action |
 |---|---|
-| `lib/elixdo_web/router.ex` | Add 1 line |
-| `lib/elixdo_web/controllers/api/mcp_controller.ex` | Create (~120 lines) |
+| `lib/elixdo_web/router.ex` | Add `:mcp_auth` pipeline and separate MCP scope |
+| `lib/elixdo_web/controllers/api/mcp_controller.ex` | Create (~160 lines) |
+
+---
+
+## Troubleshooting: `✗ Failed to connect`
+
+Work through these in order:
+
+**1. Test the initialize handshake directly:**
+```sh
+curl -X POST https://yourapp.fly.dev/api/v1/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
+```
+Should return 200 with `protocolVersion`. If 401, the token is wrong. If 404, the route isn't deployed.
+
+**2. Test SSE response:**
+```sh
+curl -X POST https://yourapp.fly.dev/api/v1/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
+Should return `event: message\ndata: {...}`. If 406, Phoenix is rejecting `text/event-stream` — the MCP pipeline is using `plug :accepts`.
+
+**3. Test notification handling:**
+```sh
+curl -X POST https://yourapp.fly.dev/api/v1/mcp \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}'
+```
+Should return 204. If 400, the notification catch-all handler is missing.
+
+**4. Check tools actually load in a new session:**
+```sh
+claude mcp list
+```
+If `✓ Connected` but tools still don't appear as `mcp__elixdo__*` in a session, restart the session — tools are loaded at startup only.
+
+---
+
+## Test plan
+
+Write these tests before implementing. All should be red until the implementation is complete.
+
+**Core protocol:**
+1. `initialize returns correct protocol version and capabilities`
+2. `tools/list returns all seven tool definitions with required fields`
+3. `notifications return 204 with empty body` ← easy to miss, critical for handshake
+4. `unknown method returns -32601 error`
+5. `missing auth returns 401`
+6. `responds with SSE format when Accept: text/event-stream` ← tests the transport layer
+
+**Tool behaviour:**
+7. `get_today returns today's date`
+8. `list_items returns items for a date`
+9. `list_items_range returns items across a date range`
+10. `list_items_range with status filter returns only matching items`
+11. `add_item creates item and it appears in list_items`
+12. `add_item converts shortcodes in body`
+13. `update_item changes item body`
+14. `update_item converts shortcodes in body`
+15. `update_item without body field is unaffected by shortcode conversion`
+16. `arrow_item marks original arrowed_out and creates copy on target date`
+17. `search_items returns matching results`
