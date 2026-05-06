@@ -1,4 +1,5 @@
 defmodule ElixdoWeb.Api.ItemJSON do
+  @moduledoc false
   alias Elixdo.ListItem
 
   @doc "Serialize a single ListItem to a JSON-safe map."

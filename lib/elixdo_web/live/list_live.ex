@@ -1,4 +1,5 @@
 defmodule ElixdoWeb.ListLive do
+  @moduledoc false
   use ElixdoWeb, :live_view
 
   alias Elixdo.{Lists, DateHelper, ListItem}
@@ -41,7 +42,8 @@ defmodule ElixdoWeb.ListLive do
      |> assign(:color_sheet_open, false)
      |> assign(:last_color, :blue)
      |> assign(:priority_sheet_open, false)
-     |> assign(:valid_colors, ListItem.colors())}
+     |> assign(:valid_colors, ListItem.colors())
+     |> assign(:valid_priorities, ListItem.priorities())}
   end
 
   @impl true
@@ -177,7 +179,7 @@ defmodule ElixdoWeb.ListLive do
 
   @valid_color_strings ListItem.color_strings()
 
-  @valid_priorities ["❶", "❷", "❸", "⭐", "🔥"]
+  @valid_priorities ListItem.priorities()
 
   def handle_event("open_priority_sheet", _, socket) do
     {:noreply, assign(socket, :priority_sheet_open, true)}
@@ -189,8 +191,7 @@ defmodule ElixdoWeb.ListLive do
 
   def handle_event("set_priority", %{"priority" => p}, socket)
       when p in @valid_priorities do
-    selected_items =
-      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+    selected_items = selected_items(socket)
 
     Enum.each(selected_items, fn item ->
       Lists.update_item(item, %{priority: p})
@@ -203,8 +204,7 @@ defmodule ElixdoWeb.ListLive do
       when status_str in @valid_status_strings do
     status = String.to_existing_atom(status_str)
 
-    selected_items =
-      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+    selected_items = selected_items(socket)
 
     Enum.each(selected_items, fn item ->
       Lists.update_item(item, %{status: status})
@@ -217,8 +217,7 @@ defmodule ElixdoWeb.ListLive do
 
   # Toolbar decoration actions
   def handle_event("set_decoration", %{"field" => field, "setting" => setting}, socket) do
-    selected_items =
-      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+    selected_items = selected_items(socket)
 
     attrs =
       case field do
@@ -248,8 +247,7 @@ defmodule ElixdoWeb.ListLive do
       when color_str in @valid_color_strings do
     color = String.to_existing_atom(color_str)
 
-    selected_items =
-      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+    selected_items = selected_items(socket)
 
     Enum.each(selected_items, fn item ->
       Lists.update_item(item, %{color: color})
@@ -269,8 +267,7 @@ defmodule ElixdoWeb.ListLive do
 
   # Remove all formats + restore active status (except arrowed_out, which cannot transition)
   def handle_event("remove_formats", _, socket) do
-    selected_items =
-      Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+    selected_items = selected_items(socket)
 
     Enum.each(selected_items, fn item ->
       Lists.update_item(item, %{
@@ -388,6 +385,10 @@ defmodule ElixdoWeb.ListLive do
   end
 
   defp clear_selection(socket), do: assign(socket, :selected, MapSet.new())
+
+  defp selected_items(socket) do
+    Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+  end
 
   defp item_class(%{status: :completed}), do: "completed"
   defp item_class(%{status: :wiggled_out}), do: "wiggled-out"

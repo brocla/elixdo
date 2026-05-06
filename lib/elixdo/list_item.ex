@@ -1,4 +1,6 @@
 defmodule Elixdo.ListItem do
+  @moduledoc "Ecto schema for a single task item. Defines fields, enums, and validation rules."
+
   use Ecto.Schema
   import Ecto.Changeset
 
@@ -22,6 +24,7 @@ defmodule Elixdo.ListItem do
 
   def colors, do: Ecto.Enum.values(__MODULE__, :color)
   def color_strings, do: Enum.map(colors(), &Atom.to_string/1)
+  def priorities, do: @valid_priorities
 
   def changeset(item, attrs) do
     item

@@ -1,4 +1,5 @@
 defmodule ElixdoWeb.Api.Helpers do
+  @moduledoc false
   alias Elixdo.{Repo, ListItem}
 
   @doc "Fetch a ListItem by id, returning {:ok, item} or {:error, :not_found}."

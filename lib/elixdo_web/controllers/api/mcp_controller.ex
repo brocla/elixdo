@@ -1,4 +1,5 @@
 defmodule ElixdoWeb.Api.McpController do
+  @moduledoc false
   use ElixdoWeb, :controller
 
   alias Elixdo.{Lists, SearchIndex, Clock, DateHelper, ListItem}
@@ -190,7 +191,7 @@ defmodule ElixdoWeb.Api.McpController do
               enum: ["active", "completed", "wiggled_out"]
             },
             color: %{type: "string", enum: ListItem.color_strings()},
-            priority: %{type: "string", enum: ["❶", "❷", "❸", "⭐", "🔥"]}
+            priority: %{type: "string", enum: ListItem.priorities()}
           },
           required: ["id"]
         }

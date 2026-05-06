@@ -1,4 +1,5 @@
 defmodule ElixdoWeb.Api.ListController do
+  @moduledoc false
   use ElixdoWeb, :controller
 
   alias Elixdo.{Lists, DateHelper}

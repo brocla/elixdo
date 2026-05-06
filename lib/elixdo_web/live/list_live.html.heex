@@ -58,7 +58,7 @@
         <button type="button" phx-click="open_priority_sheet"
                 class="priority-mobile-btn toolbar-btn" title="Priority">⭐</button>
         <div class="tb-group priority-desktop-group">
-          <%= for p <- ["❶", "❷", "❸", "⭐", "🔥"] do %>
+          <%= for p <- @valid_priorities do %>
             <button type="button" phx-click="set_priority" phx-value-priority={p}
                     class="toolbar-btn priority-btn" title={"Priority #{p}"}>{p}</button>
           <% end %>
@@ -193,7 +193,7 @@
   <%= if @priority_sheet_open do %>
     <div class="bottom-sheet-overlay" phx-click="close_priority_sheet">
       <div class="bottom-sheet">
-        <%= for p <- ["❶", "❷", "❸", "⭐", "🔥"] do %>
+        <%= for p <- @valid_priorities do %>
           <button type="button" phx-click="set_priority" phx-value-priority={p}
                   class="priority-sheet-btn" title={"Priority #{p}"}>{p}</button>
         <% end %>
