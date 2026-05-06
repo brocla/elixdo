@@ -1,7 +1,7 @@
 defmodule ElixdoWeb.ListLive do
   use ElixdoWeb, :live_view
 
-  alias Elixdo.{Lists, DateHelper, Emoji}
+  alias Elixdo.{Lists, DateHelper, ListItem}
 
   @impl true
   def mount(%{"secret" => secret} = params, _session, socket) do
@@ -40,7 +40,8 @@ defmodule ElixdoWeb.ListLive do
      |> assign(:highlighted_item_id, nil)
      |> assign(:color_sheet_open, false)
      |> assign(:last_color, :blue)
-     |> assign(:priority_sheet_open, false)}
+     |> assign(:priority_sheet_open, false)
+     |> assign(:valid_colors, ListItem.colors())}
   end
 
   @impl true
@@ -122,7 +123,7 @@ defmodule ElixdoWeb.ListLive do
 
   # Voice input
   def handle_event("voice_input", %{"text" => text}, socket) do
-    text = text |> String.trim() |> Emoji.convert()
+    text = String.trim(text)
 
     if text != "" do
       Lists.create_items(socket.assigns.date, [%{body: text}])
@@ -133,7 +134,7 @@ defmodule ElixdoWeb.ListLive do
 
   # Add item
   def handle_event("add_item", %{"body" => body}, socket) do
-    body = body |> String.trim() |> Emoji.convert()
+    body = String.trim(body)
 
     if body != "" do
       Lists.create_items(socket.assigns.date, [%{body: body}])
@@ -155,7 +156,7 @@ defmodule ElixdoWeb.ListLive do
 
   def handle_event("save_edit", %{"_id" => id, "body" => body}, socket) do
     id = String.to_integer(id)
-    body = body |> String.trim() |> Emoji.convert()
+    body = String.trim(body)
 
     if body != "" do
       item = Enum.find(socket.assigns.items, &(&1.id == id))
@@ -174,8 +175,7 @@ defmodule ElixdoWeb.ListLive do
   @valid_statuses Ecto.Enum.values(Elixdo.ListItem, :status)
   @valid_status_strings Enum.map(@valid_statuses, &Atom.to_string/1)
 
-  @valid_colors Ecto.Enum.values(Elixdo.ListItem, :color)
-  @valid_color_strings Enum.map(@valid_colors, &Atom.to_string/1)
+  @valid_color_strings ListItem.color_strings()
 
   @valid_priorities ["❶", "❷", "❸", "⭐", "🔥"]
 

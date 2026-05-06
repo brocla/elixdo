@@ -20,6 +20,9 @@ defmodule Elixdo.ListItem do
     timestamps(type: :utc_datetime)
   end
 
+  def colors, do: Ecto.Enum.values(__MODULE__, :color)
+  def color_strings, do: Enum.map(colors(), &Atom.to_string/1)
+
   def changeset(item, attrs) do
     item
     |> cast(attrs, [

@@ -346,7 +346,7 @@ body {
   border-radius: var(--radius-btn);
   color: oklch(82% 0.012 280);
   font-family: inherit;
-  font-size: 18px;
+  font-size: 24px;
   cursor: pointer;
   transition: all 0.12s;
   flex-shrink: 0;
@@ -835,6 +835,7 @@ body {
   .item-select-btn.selected::after { width: 8px; height: 8px; }
   .toolbar-btn { min-width: 40px; height: 38px; }
   .priority-btn { font-size: 22px; padding: 0 4px; min-width: unset; }
+  .today-btn { font-size: 48px; width: 48px; }
   .add-item-input { font-size: 20px; padding: 0.75rem; }
   .date-header { padding: 0.75rem; }
   .nav-arrow { font-size: 2rem; padding: 0.5rem 1.2rem; }

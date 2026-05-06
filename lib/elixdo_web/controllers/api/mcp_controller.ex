@@ -1,8 +1,8 @@
 defmodule ElixdoWeb.Api.McpController do
   use ElixdoWeb, :controller
 
-  alias Elixdo.{Lists, SearchIndex, Clock, DateHelper, Repo, ListItem, Emoji}
-  alias ElixdoWeb.Api.ItemJSON
+  alias Elixdo.{Lists, SearchIndex, Clock, DateHelper, ListItem}
+  alias ElixdoWeb.Api.{ItemJSON, Helpers}
 
   # ---------------------------------------------------------------------------
   # JSON-RPC 2.0 dispatch
@@ -92,7 +92,6 @@ defmodule ElixdoWeb.Api.McpController do
   end
 
   defp dispatch("add_item", %{"date" => date_str, "body" => body}) do
-    body = Emoji.convert(body)
     with {:ok, date} <- Date.from_iso8601(date_str),
          {:ok, [item]} <- Lists.create_items(date, [%{body: body}]) do
       ItemJSON.item(item)
@@ -100,7 +99,7 @@ defmodule ElixdoWeb.Api.McpController do
   end
 
   defp dispatch("update_item", %{"id" => id} = args) do
-    attrs = args |> Map.drop(["id"]) |> convert_body()
+    attrs = Map.drop(args, ["id"])
 
     with {:ok, item} <- fetch_item(id),
          {:ok, updated} <- Lists.update_item(item, attrs) do
@@ -190,7 +189,7 @@ defmodule ElixdoWeb.Api.McpController do
               type: "string",
               enum: ["active", "completed", "wiggled_out"]
             },
-            color: %{type: "string", enum: ["red", "blue", "green", "purple", "orange"]},
+            color: %{type: "string", enum: ListItem.color_strings()},
             priority: %{type: "string", enum: ["❶", "❷", "❸", "⭐", "🔥"]}
           },
           required: ["id"]
@@ -226,13 +225,5 @@ defmodule ElixdoWeb.Api.McpController do
   # Helpers
   # ---------------------------------------------------------------------------
 
-  defp convert_body(%{"body" => body} = attrs), do: Map.put(attrs, "body", Emoji.convert(body))
-  defp convert_body(attrs), do: attrs
-
-  defp fetch_item(id) do
-    case Repo.get(ListItem, id) do
-      nil -> {:error, :not_found}
-      item -> {:ok, item}
-    end
-  end
+  defp fetch_item(id), do: Helpers.fetch_item(id)
 end

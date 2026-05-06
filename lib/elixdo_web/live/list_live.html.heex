@@ -68,16 +68,11 @@
         <button type="button" phx-click="open_color_sheet"
                 class={"color-mobile-btn swatch-#{@last_color}"} title="Color"></button>
         <div class="swatches-row">
-          <button type="button" phx-click="set_decoration" phx-value-field="color"
-                  phx-value-setting="red" class="color-swatch swatch-red" title="Red"></button>
-          <button type="button" phx-click="set_decoration" phx-value-field="color"
-                  phx-value-setting="blue" class="color-swatch swatch-blue" title="Blue"></button>
-          <button type="button" phx-click="set_decoration" phx-value-field="color"
-                  phx-value-setting="green" class="color-swatch swatch-green" title="Green"></button>
-          <button type="button" phx-click="set_decoration" phx-value-field="color"
-                  phx-value-setting="purple" class="color-swatch swatch-purple" title="Purple"></button>
-          <button type="button" phx-click="set_decoration" phx-value-field="color"
-                  phx-value-setting="orange" class="color-swatch swatch-orange" title="Orange"></button>
+          <%= for color <- @valid_colors do %>
+            <button type="button" phx-click="set_decoration" phx-value-field="color"
+                    phx-value-setting={color} class={"color-swatch swatch-#{color}"}
+                    title={String.capitalize(Atom.to_string(color))}></button>
+          <% end %>
         </div>
 
         <%# ── Clear formats ─────────────────────────────────────── %>
@@ -210,7 +205,7 @@
   <%= if @color_sheet_open do %>
     <div class="bottom-sheet-overlay" phx-click="close_color_sheet">
       <div class="bottom-sheet">
-        <%= for color <- [:red, :blue, :green, :purple, :orange] do %>
+        <%= for color <- @valid_colors do %>
           <button type="button" phx-click="set_color" phx-value-color={color}
                   class={"color-sheet-swatch swatch-#{color}"}></button>
         <% end %>
