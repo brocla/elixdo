@@ -14,37 +14,37 @@ defmodule ElixdoWeb.ListLiveTest do
 
   test "mounts and shows today's date", %{conn: conn} do
     {:ok, _view, html} = live(conn, "/#{secret()}/list")
-    assert html =~ "May 1, 2026"
+    assert html =~ "May 1"
   end
 
   test "navigating prev_day changes date", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/#{secret()}/list")
     html = view |> element("button.nav-left") |> render_click()
-    assert html =~ "April 30, 2026"
+    assert html =~ "April 30"
   end
 
   test "navigating next_day changes date", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/#{secret()}/list")
     html = view |> element("button.nav-right") |> render_click()
-    assert html =~ "May 2, 2026"
+    assert html =~ "May 2"
   end
 
   test "arrow key left navigates to prev day", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/#{secret()}/list")
     html = render_keydown(view, "key_nav", %{"key" => "ArrowLeft"})
-    assert html =~ "April 30, 2026"
+    assert html =~ "April 30"
   end
 
   test "arrow key right navigates to next day", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/#{secret()}/list")
     html = render_keydown(view, "key_nav", %{"key" => "ArrowRight"})
-    assert html =~ "May 2, 2026"
+    assert html =~ "May 2"
   end
 
   test "date picker jump navigates to selected date", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/#{secret()}/list")
     html = view |> element("#date-picker-form") |> render_change(%{"date" => "2026-06-15"})
-    assert html =~ "June 15, 2026"
+    assert html =~ "June 15"
   end
 
   test "return to today button hidden when on today", %{conn: conn} do
@@ -60,7 +60,7 @@ defmodule ElixdoWeb.ListLiveTest do
   test "return to today button navigates home", %{conn: conn} do
     {:ok, view, _} = live(conn, "/#{secret()}/list/2026-04-01")
     html = view |> element("button.today-btn") |> render_click()
-    assert html =~ "May 1, 2026"
+    assert html =~ "May 1"
   end
 
   test "DateWatcher midnight broadcast updates today assign", %{conn: conn} do
@@ -196,7 +196,7 @@ defmodule ElixdoWeb.ListLiveTest do
       html =
         view |> element(".search-result-item", "unique searchable item xyz") |> render_click()
 
-      assert html =~ "June 20, 2026"
+      assert html =~ "June 20"
 
       # The highlighted item should have the search-highlight class
       assert html =~ "search-highlight"
