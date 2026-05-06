@@ -93,7 +93,7 @@
     <div class="date-header">
       <button type="button" phx-click="prev_day" class="nav-arrow nav-left">⟨</button>
       <div class="date-display">
-        <label for="date-picker">{Calendar.strftime(@date, "%A, %B %-d, %Y")}</label>
+        <label for="date-picker">{Calendar.strftime(@date, "%A, %B %-d")}</label>
         <%# Custom styled date picker: button triggers showPicker() on hidden input %>
         <div class="date-picker-wrap">
           <button type="button" class="date-picker-btn" onclick="document.getElementById('date-picker').showPicker()">
