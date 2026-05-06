@@ -21,17 +21,22 @@ This method was chosen to lower the friction to login to near zero, to help the 
 
 ## Using the App
 
-- **Add items** — type in the input bar at the bottom and press Enter (Shift+Enter for a newline)
-- **Complete an item** — click the circle on the left
-- **Select an item** — click anywhere on the item text to select it; the toolbar activates
-- **Format** — with an item selected, use the toolbar to toggle Bold, Italic, Highlight, color, or a text prefix
+- **Add items** — type in the input bar at the bottom and press Enter (or tap Add on mobile)
+- **Voice input** — tap the microphone button to dictate an item (Android Chrome)
+- **Select an item** — click the circle on the left to select it; the toolbar activates
+- **Edit an item** — click the item text to edit it inline
+- **Complete an item** — select it and click ✓ in the toolbar
+- **Wiggle out** — select and click the wiggle button to mark an item as abandoned
 - **Arrow forward** — push a selected item to a future date (→ button in toolbar); the original stays struck through with an annotation showing where it went
-- **Remove all formats** — the ✕ button clears formatting and restores an arrowed item to active
-- **Navigate dates** — use ‹ › arrows or the calendar picker; "Today" button jumps back to today
+- **Priority** — assign a priority decoration (❶ ❷ ❸ ⭐ 🔥) that appears on the drag handle
+- **Color** — apply a color to selected items via the toolbar swatches (desktop) or color button (mobile)
+- **Sort active-first** — the sort button reorders the list so active items float to the top
+- **Remove all formats** — the ✕ button clears color, priority, and status, restoring an item to active
+- **Navigate dates** — use ‹ › arrows or the calendar picker; ◉ jumps back to today
 - **Reorder** — drag and drop items within a day
-- **Search** — click the magnifying glass to search across all items
+- **Search** — click the magnifying glass to search across all items and all dates
 
-Note, todo items added to the list can be edited and decorated, but not deleted. I never erased items off paper todo lists. I struck them out when complete. Wiggled them out if abandoned. And Arrowed them out if moved to another day. But never deleted them. 
+Note, todo items can be edited and decorated, but not deleted. I never erased items off paper todo lists. I struck them out when complete. Wiggled them out if abandoned. And arrowed them out if moved to another day. But never deleted them.
 
 ## Updating the Secret
 
@@ -66,6 +71,21 @@ mix test
 ## Deployment
 
 See [DEPLOYMENT_README.md](DEPLOYMENT_README.md) for full instructions on deploying your own instance to Fly.io, including prerequisites, secrets, and volume setup.
+
+## AI / MCP Access
+
+Elixdo exposes an embedded [MCP](https://modelcontextprotocol.io) server at `POST /api/v1/mcp`. This lets AI assistants (Claude Code, Claude.ai) read and write your lists directly.
+
+**Available tools:** `get_today`, `list_items`, `list_items_range`, `add_item`, `update_item`, `arrow_item`, `search_items`
+
+Authentication uses a bearer token set via the `AGENT_TOKEN` environment variable. To register with Claude Code:
+
+```bash
+claude mcp add --transport http --scope user elixdo https://elixdo.fly.dev/api/v1/mcp \
+  --header "Authorization: Bearer <your-token>"
+```
+
+See [MCP_SERVER_PLAN.md](MCP_SERVER_PLAN.md) for full details.
 
 ## Tech Stack
 
