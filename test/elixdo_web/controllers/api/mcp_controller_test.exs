@@ -30,11 +30,12 @@ defmodule ElixdoWeb.Api.McpControllerTest do
     conn |> auth_conn() |> post("/api/v1/mcp", body)
   end
 
-  defp insert_item(attrs \\ []) do
+  defp insert_item(attrs) do
     attrs = Enum.into(attrs, %{})
     {:ok, [item]} = Lists.create_items(attrs[:date] || @date, [Map.merge(%{body: "test item"}, attrs)])
     item
   end
+
 
   # ---------------------------------------------------------------------------
   # initialize
@@ -59,7 +60,7 @@ defmodule ElixdoWeb.Api.McpControllerTest do
 
     assert MapSet.size(names) == 7
     expected = ~w[get_today list_items list_items_range add_item update_item arrow_item search_items]
-    for name <- expected, do: assert MapSet.member?(names, name), message: "missing tool: #{name}"
+    for name <- expected, do: assert(MapSet.member?(names, name), "missing tool: #{name}")
 
     for tool <- tools do
       assert is_binary(tool["name"])
