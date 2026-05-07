@@ -260,6 +260,75 @@ defmodule ElixdoWeb.Api.McpControllerTest do
   end
 
   # ---------------------------------------------------------------------------
+  # Status terminology translation
+  # ---------------------------------------------------------------------------
+
+  test "list_items returns 'abandoned' for wiggled_out items", %{conn: conn} do
+    item = insert_item(date: ~D[2026-11-18], body: "gave up")
+    Lists.update_item(item, %{status: :wiggled_out})
+
+    resp =
+      mcp(conn, "tools/call", %{
+        "name" => "list_items",
+        "arguments" => %{"date" => "2026-11-18"}
+      })
+      |> json_response(200)
+
+    text = resp["result"]["content"] |> hd() |> Map.fetch!("text")
+    items = Jason.decode!(text)
+    assert Enum.any?(items, &(&1["status"] == "abandoned"))
+  end
+
+  test "list_items returns 'deferred' for arrowed_out items", %{conn: conn} do
+    item = insert_item(date: ~D[2026-11-19], body: "moved forward")
+    Lists.arrow_item(item, ~D[2026-11-20])
+
+    resp =
+      mcp(conn, "tools/call", %{
+        "name" => "list_items",
+        "arguments" => %{"date" => "2026-11-19"}
+      })
+      |> json_response(200)
+
+    text = resp["result"]["content"] |> hd() |> Map.fetch!("text")
+    items = Jason.decode!(text)
+    assert Enum.any?(items, &(&1["status"] == "deferred"))
+  end
+
+  test "update_item with status 'abandoned' stores wiggled_out in DB", %{conn: conn} do
+    item = insert_item(date: @date, body: "to abandon")
+
+    mcp(conn, "tools/call", %{
+      "name" => "update_item",
+      "arguments" => %{"id" => item.id, "status" => "abandoned"}
+    })
+    |> json_response(200)
+
+    [updated] = Lists.get_items_for_date(@date) |> Enum.filter(&(&1.id == item.id))
+    assert updated.status == :wiggled_out
+  end
+
+  test "list_items_range filters by 'abandoned' status", %{conn: conn} do
+    {:ok, [active]} = Lists.create_items(~D[2026-11-21], [%{body: "still going"}])
+    {:ok, [gone]} = Lists.create_items(~D[2026-11-21], [%{body: "gave up on this"}])
+    Lists.update_item(gone, %{status: :wiggled_out})
+
+    resp =
+      mcp(conn, "tools/call", %{
+        "name" => "list_items_range",
+        "arguments" => %{"from" => "2026-11-21", "to" => "2026-11-21", "statuses" => ["abandoned"]}
+      })
+      |> json_response(200)
+
+    text = resp["result"]["content"] |> hd() |> Map.fetch!("text")
+    items = Jason.decode!(text)
+    bodies = Enum.map(items, & &1["body"])
+    assert "gave up on this" in bodies
+    refute "still going" in bodies
+    _ = active
+  end
+
+  # ---------------------------------------------------------------------------
   # SSE (Streamable HTTP) transport
   # ---------------------------------------------------------------------------
 

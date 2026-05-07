@@ -80,31 +80,40 @@ defmodule ElixdoWeb.Api.McpController do
 
   defp dispatch("list_items", %{"date" => date_str}) do
     with {:ok, date} <- Date.from_iso8601(date_str) do
-      Lists.get_items_for_date(date) |> Enum.map(&ItemJSON.item/1)
+      Lists.get_items_for_date(date) |> Enum.map(&mcp_item/1)
     end
   end
 
   defp dispatch("list_items_range", args) do
     with {:ok, from} <- Date.from_iso8601(args["from"]),
          {:ok, to} <- Date.from_iso8601(args["to"]) do
-      statuses = args["statuses"] && Enum.map(args["statuses"], &String.to_existing_atom/1)
-      Lists.get_items_for_range(from, to, statuses) |> Enum.map(&ItemJSON.item/1)
+      statuses =
+        args["statuses"] &&
+          Enum.map(args["statuses"], fn s -> s |> normalize_status() |> String.to_existing_atom() end)
+
+      Lists.get_items_for_range(from, to, statuses) |> Enum.map(&mcp_item/1)
     end
   end
 
   defp dispatch("add_item", %{"date" => date_str, "body" => body}) do
     with {:ok, date} <- Date.from_iso8601(date_str),
          {:ok, [item]} <- Lists.create_items(date, [%{body: body}]) do
-      ItemJSON.item(item)
+      mcp_item(item)
     end
   end
 
   defp dispatch("update_item", %{"id" => id} = args) do
-    attrs = Map.drop(args, ["id"])
+    attrs =
+      args
+      |> Map.drop(["id"])
+      |> Map.new(fn
+        {"status", s} -> {"status", normalize_status(s)}
+        pair -> pair
+      end)
 
     with {:ok, item} <- fetch_item(id),
          {:ok, updated} <- Lists.update_item(item, attrs) do
-      ItemJSON.item(updated)
+      mcp_item(updated)
     end
   end
 
@@ -112,7 +121,7 @@ defmodule ElixdoWeb.Api.McpController do
     with {:ok, item} <- fetch_item(id),
          {:ok, target_date} <- DateHelper.resolve(target_date_str),
          {:ok, original, _copy} <- Lists.arrow_item(item, target_date) do
-      ItemJSON.item(original)
+      mcp_item(original)
     end
   end
 
@@ -159,7 +168,7 @@ defmodule ElixdoWeb.Api.McpController do
             to: %{type: "string", description: "End date ISO 8601"},
             statuses: %{
               type: "array",
-              items: %{type: "string", enum: ["active", "completed", "wiggled_out", "arrowed_out"]},
+              items: %{type: "string", enum: ["active", "completed", "abandoned", "deferred"]},
               description: "Filter by these statuses (omit for all)"
             }
           },
@@ -188,7 +197,7 @@ defmodule ElixdoWeb.Api.McpController do
             body: %{type: "string"},
             status: %{
               type: "string",
-              enum: ["active", "completed", "wiggled_out"]
+              enum: ["active", "completed", "abandoned"]
             },
             color: %{type: "string", enum: ListItem.color_strings()},
             priority: %{type: "string", enum: ListItem.priorities()}
@@ -198,7 +207,7 @@ defmodule ElixdoWeb.Api.McpController do
       },
       %{
         name: "arrow_item",
-        description: "Move an active item forward to another date",
+        description: "Defer an active item to a future date",
         inputSchema: %{
           type: "object",
           properties: %{
@@ -227,4 +236,19 @@ defmodule ElixdoWeb.Api.McpController do
   # ---------------------------------------------------------------------------
 
   defp fetch_item(id), do: Helpers.fetch_item(id)
+
+  # Translate friendly MCP status names → internal DB atom strings (input)
+  defp normalize_status("abandoned"), do: "wiggled_out"
+  defp normalize_status("deferred"), do: "arrowed_out"
+  defp normalize_status(s), do: s
+
+  # Translate internal DB strings → friendly MCP status names (output)
+  defp display_status("wiggled_out"), do: "abandoned"
+  defp display_status("arrowed_out"), do: "deferred"
+  defp display_status(s), do: s
+
+  # Serialize an item for MCP responses with friendly status names
+  defp mcp_item(item) do
+    item |> ItemJSON.item() |> Map.update!(:status, &display_status/1)
+  end
 end
