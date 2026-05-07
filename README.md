@@ -25,9 +25,9 @@ This method was chosen to lower the friction to login to near zero, to help the 
 - **Voice input** — tap the microphone button to dictate an item (Android Chrome)
 - **Select an item** — click the circle on the left to select it; the toolbar activates
 - **Edit an item** — click the item text to edit it inline
-- **Complete an item** — select it and click ✓ in the toolbar
-- **Wiggle out** — select and click the wiggle button to mark an item as abandoned
-- **Arrow forward** — push a selected item to a future date (→ button in toolbar); the original stays struck through with an annotation showing where it went
+- **Completed** — select an item and click ✓ in the toolbar
+- **Abandoned** — select and click the wiggle button to mark an item as abandoned
+- **Deferred** — push a selected item to a future date (→ button in toolbar); the original stays struck through with an annotation showing where it went
 - **Priority** — assign a priority decoration (❶ ❷ ❸ ⭐ 🔥) that appears on the drag handle
 - **Color** — apply a color to selected items via the toolbar swatches (desktop) or color button (mobile)
 - **Sort active-first** — the sort button reorders the list so active items float to the top

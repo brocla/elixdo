@@ -32,21 +32,21 @@
         <div class="tb-group">
           <%# Checkmark %>
           <button type="button" phx-click="set_status" phx-value-status="completed"
-                  class="toolbar-btn" title="Complete">
+                  class="toolbar-btn" title="Completed">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3,10 8,15 17,5"/>
             </svg>
           </button>
           <%# Wiggle out %>
           <button type="button" phx-click="set_status" phx-value-status="wiggled_out"
-                  class="toolbar-btn" title="Wiggle out">
+                  class="toolbar-btn" title="Abandoned">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M2,8 C5,5 8,11 11,8 C14,5 17,11 20,8"/>
               <path d="M2,13 C5,10 8,16 11,13 C14,10 17,16 20,13"/>
             </svg>
           </button>
           <%# Arrow forward %>
-          <button type="button" phx-click="arrow_selected" class="toolbar-btn" title="Arrow forward">
+          <button type="button" phx-click="arrow_selected" class="toolbar-btn" title="Deferred">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="3" y1="10" x2="16" y2="10"/>
               <polyline points="10,4 16,10 10,16"/>
