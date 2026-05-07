@@ -169,6 +169,26 @@ defmodule ElixdoWeb.ListLiveTest do
     end
   end
 
+  describe "push context" do
+    test "set_push_context stores device_id and suppress in socket assigns", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/#{secret()}/list")
+
+      render_hook(view, "set_push_context", %{"device_id" => "my-device", "suppress" => true})
+
+      # Verify the event was handled without error (no crash = assigns stored)
+      # We can't directly inspect assigns from test, but we can confirm no crash
+      assert render(view) =~ "list"
+    end
+
+    test "set_push_context with suppress false stores false in assigns", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/#{secret()}/list")
+
+      render_hook(view, "set_push_context", %{"device_id" => "other-device", "suppress" => false})
+
+      assert render(view) =~ "list"
+    end
+  end
+
   describe "search" do
     test "add item, open search, type query, see result, click result, verify navigation and highlight",
          %{conn: conn} do

@@ -43,7 +43,9 @@ defmodule ElixdoWeb.ListLive do
      |> assign(:last_color, :blue)
      |> assign(:priority_sheet_open, false)
      |> assign(:valid_colors, ListItem.colors())
-     |> assign(:valid_priorities, ListItem.priorities())}
+     |> assign(:valid_priorities, ListItem.priorities())
+     |> assign(:device_id, nil)
+     |> assign(:suppress_push, false)}
   end
 
   @impl true
@@ -134,12 +136,23 @@ defmodule ElixdoWeb.ListLive do
     {:noreply, socket}
   end
 
+  # Push context (sent by JS on connect)
+  def handle_event("set_push_context", %{"device_id" => id, "suppress" => suppress}, socket) do
+    {:noreply,
+     socket
+     |> assign(:device_id, id)
+     |> assign(:suppress_push, suppress)}
+  end
+
   # Add item
   def handle_event("add_item", %{"body" => body}, socket) do
     body = String.trim(body)
 
     if body != "" do
-      Lists.create_items(socket.assigns.date, [%{body: body}])
+      Lists.create_items(socket.assigns.date, [%{body: body}],
+        device_id: socket.assigns.device_id,
+        suppress_push: socket.assigns.suppress_push
+      )
 
       {:noreply,
        socket

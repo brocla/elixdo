@@ -3,6 +3,6 @@ defmodule ElixdoWeb.HealthController do
   use ElixdoWeb, :controller
 
   def show(conn, _params) do
-    json(conn, %{status: "ok"})
+    json(conn, %{status: "ok", sha: System.get_env("GIT_SHA", "unknown")})
   end
 end

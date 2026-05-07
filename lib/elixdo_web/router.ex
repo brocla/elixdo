@@ -15,6 +15,12 @@ defmodule ElixdoWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :push_api do
+    plug :accepts, ["json"]
+    plug :fetch_session
+    plug ElixdoWeb.AuthPlug
+  end
+
   pipeline :api_auth do
     plug :accepts, ["json"]
     plug ElixdoWeb.ApiAuthPlug
@@ -29,6 +35,7 @@ defmodule ElixdoWeb.Router do
     pipe_through :api
     get "/manifest.json", ElixdoWeb.ManifestController, :show
     get "/health", ElixdoWeb.HealthController, :show
+    get "/push/vapid-public-key", ElixdoWeb.PushController, :vapid_key
   end
 
   scope "/api/v1", ElixdoWeb.Api do
@@ -52,6 +59,13 @@ defmodule ElixdoWeb.Router do
     get "/", PageController, :index
     live "/list", ListLive
     live "/list/:date", ListLive
+    live "/settings", SettingsLive, :index
+  end
+
+  scope "/:secret", ElixdoWeb do
+    pipe_through :push_api
+    post "/push/subscribe", PushController, :subscribe
+    delete "/push/subscribe", PushController, :unsubscribe
   end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development

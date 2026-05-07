@@ -156,8 +156,23 @@ Fly redeploys automatically. Anyone using the old URL gets a 404 until they upda
 
 ### Redeploy after code changes
 
+Always deploy with the git SHA so you can track which commit is live:
+
 ```bash
-fly deploy
+fly deploy --build-arg GIT_SHA=$(git rev-parse --short HEAD)
+```
+
+To check which version is currently deployed:
+
+```bash
+curl https://your-app-name.fly.dev/health
+# {"status":"ok","sha":"a1b2c3d"}
+```
+
+Compare the `sha` value against your git log:
+
+```bash
+git log --oneline | head -5
 ```
 
 ### View logs

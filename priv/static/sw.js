@@ -1,3 +1,19 @@
+self.addEventListener("push", (event) => {
+  const data = event.data?.json() ?? {};
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? "Elixdo", {
+      body: data.body ?? "",
+      icon: "/images/web-app-manifest-192x192.png",
+      badge: "/images/badge-96x96_2.0.png"
+    })
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow("/"));
+});
+
 const CACHE = "elixdo-shell-v1";
 const SHELL = ["/assets/css/app.css", "/assets/js/app.js"];
 

@@ -58,14 +58,22 @@ Push service ──► SW ──► Notification shown on owner's device
 
 ### VAPID keypair
 
-Generate once:
+Generate using the mix task provided by `web_push_elixir`:
 ```bash
-mix run -e "IO.inspect(:crypto.generate_key(:ecdh, :prime256v1))"
+mix generate.vapid.keys
 ```
-Or use the `web_push_elixir` mix task if it provides one. Store as Fly secrets:
+
+This outputs a map with `vapid_public_key`, `vapid_private_key`, and `vapid_subject`.
+Store the values as Fly secrets:
 ```bash
-fly secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=mailto:you@example.com
+fly secrets set \
+  VAPID_PUBLIC_KEY=<vapid_public_key value> \
+  VAPID_PRIVATE_KEY=<vapid_private_key value> \
+  VAPID_SUBJECT=mailto:you@example.com
 ```
+
+**Important:** Generate the keys only once. If you regenerate them, all existing browser
+push subscriptions become invalid and every subscribed device must re-subscribe.
 
 Read in `config/runtime.exs`:
 ```elixir
@@ -363,24 +371,59 @@ get the notification (which is zero devices for a default install).
 
 ## Test plan
 
-1. `PushSubscription.changeset/2 accepts valid attrs`
-2. `PushSubscription.changeset/2 rejects duplicate device_id`
-3. `POST /<secret>/push/subscribe upserts subscription`
-4. `DELETE /<secret>/push/subscribe removes subscription`
-5. `GET /push/vapid-public-key returns public key`
-6. `PushNotifications.notify_devices/2 skips the originating device`
-7. `PushNotifications.notify_devices/2 sends to all other subscribed devices`
-8. `Lists.create_items/3 with suppress_push: true does not trigger push`
-9. `Lists.create_items/3 with device_id skips that device`
+### Schema — `test/elixdo/push_subscription_test.exs`
+
+1. `changeset/2 accepts valid attrs`
+2. `changeset/2 rejects missing required fields`
+3. `changeset/2 rejects duplicate device_id`
+4. `changeset/2 rejects duplicate endpoint`
+
+### Controller — `test/elixdo_web/controllers/push_controller_test.exs`
+
+5. `POST /<secret>/push/subscribe inserts a new subscription`
+6. `POST /<secret>/push/subscribe upserts on device_id conflict`
+7. `DELETE /<secret>/push/subscribe removes the subscription`
+8. `DELETE /<secret>/push/subscribe with unknown device_id returns 204`
+9. `GET /push/vapid-public-key returns the public key string`
+10. `POST /<secret>/push/subscribe with wrong secret returns 404`
+11. `POST /<secret>/push/subscribe with missing fields returns 422`
+
+### Dispatch — `test/elixdo/push_notifications_test.exs`
+
+12. `notify_devices/2 with no subscriptions does nothing`
+13. `notify_devices/2 notifies all subscribed devices`
+14. `notify_devices/2 skips the originating device_id`
+15. `notify_devices/2 with nil except_device_id notifies all subscribers`
+
+### Lists integration — `test/elixdo/lists_test.exs`
+
+16. `create_items/3 with suppress_push: true does not trigger push`
+17. `create_items/3 with suppress_push: false triggers push for each item`
+18. `create_items/3 with device_id passes it through to notify_devices`
+
+### LiveView — `test/elixdo_web/live/list_live_test.exs`
+
+19. `set_push_context stores device_id and suppress in socket assigns`
+20. `add_item with suppress=true does not trigger push`
+21. `add_item with suppress=false triggers push`
+
+### Not tested in ExUnit (manual device testing only)
+
+- Service worker registration and push event handling
+- `PushManager.subscribe()` and localStorage flag behavior
+- Notification appearance on Android status bar and notification drawer
+- iOS home screen requirement
+These are covered by the deployment checklist manual steps.
 
 ---
 
 ## Deployment checklist
 
 - [ ] `mix deps.get` (web_push_elixir)
-- [ ] `mix ecto.migrate` on Fly
+- [ ] Generate VAPID keys: `mix generate.vapid.keys`
 - [ ] `fly secrets set VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=...`
-- [ ] `fly deploy`
+- [ ] `fly deploy --build-arg GIT_SHA=$(git rev-parse --short HEAD)`
+- [ ] `mix ecto.migrate` on Fly (runs automatically via release command)
 - [ ] On each personal device: visit `/<secret>/settings`, enable both toggles
 - [ ] iOS: add app to home screen first, then visit settings
 - [ ] Test: add item via MCP → notification appears on personal device
@@ -393,6 +436,6 @@ get the notification (which is zero devices for a default install).
 - Regular users see and configure nothing. Zero friction preserved.
 - The settings page URL is effectively secret — it's under the same secret path segment.
 - **Icons**: the service worker uses `priv/static/images/web-app-manifest-192x192.png`
-  (notification drawer) and `priv/static/images/badge 96x96.png` (status bar). Both
+  (notification drawer) and `priv/static/images/badge-96x96.png` (status bar). Both
   files exist at `priv/static/images/`.
 - **iOS caveat**: document the home screen requirement prominently on the settings page.

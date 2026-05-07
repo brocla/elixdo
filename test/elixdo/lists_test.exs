@@ -1,5 +1,6 @@
 defmodule Elixdo.ListsTest do
   use Elixdo.DataCase, async: false
+  import ExUnit.CaptureLog
 
   alias Elixdo.Lists
 
@@ -73,6 +74,37 @@ defmodule Elixdo.ListsTest do
 
       results = Lists.get_items_for_range(@date, @date)
       assert length(results) == 1
+    end
+  end
+
+  describe "create_items/3 push opts" do
+    test "with suppress_push: true does not trigger push (no crash)" do
+      assert {:ok, [item]} =
+               Lists.create_items(@date, [%{body: "suppressed item"}], suppress_push: true)
+
+      assert item.body == "suppressed item"
+    end
+
+    test "with suppress_push: false triggers push (no crash without VAPID keys)" do
+      capture_log(fn ->
+        assert {:ok, [item]} =
+                 Lists.create_items(@date, [%{body: "push item"}],
+                   suppress_push: false,
+                   device_id: "test-device"
+                 )
+
+        assert item.body == "push item"
+        Process.sleep(50)
+      end)
+    end
+
+    test "with device_id passes it through to notify_devices (no crash)" do
+      capture_log(fn ->
+        assert {:ok, [_item]} =
+                 Lists.create_items(@date, [%{body: "device item"}], device_id: "my-device-id")
+
+        Process.sleep(50)
+      end)
     end
   end
 

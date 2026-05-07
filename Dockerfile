@@ -17,6 +17,7 @@ ARG DEBIAN_VERSION=trixie-20260421-slim
 
 ARG BUILDER_IMAGE="docker.io/hexpm/elixir:${ELIXIR_VERSION}-erlang-${OTP_VERSION}-debian-${DEBIAN_VERSION}"
 ARG RUNNER_IMAGE="docker.io/debian:${DEBIAN_VERSION}"
+ARG GIT_SHA=unknown
 
 FROM ${BUILDER_IMAGE} AS builder
 
@@ -87,6 +88,8 @@ RUN chown nobody /app
 
 # set runner ENV
 ENV MIX_ENV="prod"
+ARG GIT_SHA=unknown
+ENV GIT_SHA=${GIT_SHA}
 
 # Only copy the final release from the build stage
 COPY --from=builder /app/_build/${MIX_ENV}/rel/elixdo ./

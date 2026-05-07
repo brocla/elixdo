@@ -9,9 +9,24 @@ defmodule Elixdo.Lists do
   def get_items_for_range(from_date, to_date, statuses \\ nil),
     do: DB.get_items_for_range(from_date, to_date, statuses)
 
-  def create_items(date, attrs) do
+  def create_items(date, attrs, opts \\ []) do
     attrs = Enum.map(attrs, &convert_body/1)
-    Server.create_items(date, attrs)
+
+    case Server.create_items(date, attrs) do
+      {:ok, items} = result ->
+        unless opts[:suppress_push] do
+          device_id = opts[:device_id]
+
+          Enum.each(items, fn item ->
+            Elixdo.PushNotifications.notify_devices(item.body, device_id)
+          end)
+        end
+
+        result
+
+      error ->
+        error
+    end
   end
 
   def update_item(item, attrs) do

@@ -1,5 +1,10 @@
 import Config
 
+config :web_push_elixir,
+  vapid_public_key: System.get_env("VAPID_PUBLIC_KEY"),
+  vapid_private_key: System.get_env("VAPID_PRIVATE_KEY"),
+  vapid_subject: System.get_env("VAPID_SUBJECT", "mailto:admin@elixdo.fly.dev")
+
 # config/runtime.exs is executed for all environments, including
 # during releases. It is executed after compilation and before the
 # system starts, so it is typically used to load production configuration

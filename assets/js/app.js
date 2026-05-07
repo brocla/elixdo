@@ -29,9 +29,18 @@ import AddItem from "./add_item"
 import EditItem from "./edit_item"
 import DragSort from "./drag_sort"
 import VoiceInput from "./voice_input"
+import {setupPush, shouldSuppress} from "./push_notifications"
+import PushSettings from "./push_settings"
 
 const SearchFocus = {
   mounted() { this.el.focus() }
+}
+
+const PushContext = {
+  mounted() {
+    const deviceId = localStorage.getItem("elixdo_device_id") || ""
+    this.pushEvent("set_push_context", {device_id: deviceId, suppress: shouldSuppress()})
+  }
 }
 
 let Hooks = {...colocatedHooks}
@@ -41,6 +50,8 @@ Hooks.EditItem = EditItem
 Hooks.DragSort = DragSort
 Hooks.SearchFocus = SearchFocus
 Hooks.VoiceInput = VoiceInput
+Hooks.PushSettings = PushSettings
+Hooks.PushContext = PushContext
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
@@ -48,6 +59,12 @@ const liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
   hooks: Hooks,
 })
+
+// Extract secret path from URL (first segment after /)
+const secretPath = window.location.pathname.split("/").filter(Boolean)[0] || ""
+
+// Set up push notifications on page load
+setupPush(secretPath).catch(() => {})
 
 // Show progress bar on live navigation and form submits
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
