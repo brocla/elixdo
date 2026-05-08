@@ -72,6 +72,17 @@ mix test
 
 See [DEPLOYMENT_README.md](DEPLOYMENT_README.md) for full instructions on deploying your own instance to Fly.io, including prerequisites, secrets, and volume setup.
 
+## Push Notifications
+
+Elixdo can send a push notification to your personal devices when anyone — a collaborator or an AI assistant — adds a new item. Regular users see and configure nothing; notifications are off by default.
+
+To opt in on a device, visit `/<secret>/settings` and enable:
+
+- **Notify me on this device** — this device will receive push notifications when new items are added
+- **Don't send from this device** — suppress notifications triggered by your own additions on this device
+
+Setting both flags on your personal devices means you are notified when others add items but not when you do. iOS requires the app to be added to your home screen before notifications can be enabled.
+
 ## AI / MCP Access
 
 Elixdo exposes an embedded [MCP](https://modelcontextprotocol.io) server at `POST /api/v1/mcp`. This lets AI assistants (Claude Code, Claude.ai) read and write your lists directly.
@@ -86,6 +97,28 @@ claude mcp add --transport http --scope user elixdo https://elixdo.fly.dev/api/v
 ```
 
 See [MCP_SERVER_PLAN.md](MCP_SERVER_PLAN.md) for full details.
+
+## Deployment Scripts (PowerShell)
+
+Two scripts in the repo root simplify common operations:
+
+**`deploy.ps1`** — deploys to Fly.io with the current git SHA embedded, so the health endpoint can report which commit is live:
+```powershell
+.\deploy.ps1
+```
+
+**`check_deployment_level.ps1`** — compares the deployed SHA against recent commits so you can tell at a glance whether production is current:
+```powershell
+.\check_deployment_level.ps1
+```
+Output:
+```
+Deployed SHA: a1b2c3d
+
+Recent commits:
+a1b2c3d Fix suppress bug: export getDeviceId...
+9929731 Phase 8: Web Push notifications...
+```
 
 ## Tech Stack
 
