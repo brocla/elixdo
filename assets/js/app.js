@@ -29,7 +29,7 @@ import AddItem from "./add_item"
 import EditItem from "./edit_item"
 import DragSort from "./drag_sort"
 import VoiceInput from "./voice_input"
-import {setupPush, shouldSuppress} from "./push_notifications"
+import {setupPush, shouldSuppress, getDeviceId} from "./push_notifications"
 import PushSettings from "./push_settings"
 
 const SearchFocus = {
@@ -38,8 +38,7 @@ const SearchFocus = {
 
 const PushContext = {
   mounted() {
-    const deviceId = localStorage.getItem("elixdo_device_id") || ""
-    this.pushEvent("set_push_context", {device_id: deviceId, suppress: shouldSuppress()})
+    this.pushEvent("set_push_context", {device_id: getDeviceId(), suppress: shouldSuppress()})
   }
 }
 

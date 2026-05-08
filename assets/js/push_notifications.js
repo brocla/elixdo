@@ -2,7 +2,7 @@ const DEVICE_ID_KEY = "elixdo_device_id";
 const RECEIVE_KEY = "elixdo_receive_notifications";
 const SUPPRESS_KEY = "elixdo_suppress_notifications";
 
-function getDeviceId() {
+export function getDeviceId() {
   let id = localStorage.getItem(DEVICE_ID_KEY);
   if (!id) {
     id = crypto.randomUUID();
