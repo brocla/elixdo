@@ -1,3 +1,6 @@
+// The mic button is always rendered by the server with style="display:none".
+// This hook reveals it only when the Web Speech API is available.
+// Server-side detection is not possible — browser capability is unknown at render time.
 const VoiceInput = {
   mounted() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;

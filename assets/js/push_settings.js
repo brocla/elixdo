@@ -13,12 +13,10 @@ const PushSettings = {
       receiveEl.addEventListener("change", async () => {
         localStorage.setItem(RECEIVE_KEY, receiveEl.checked ? "true" : "false");
         const secretPath = window.location.pathname.split("/")[1];
-        if (receiveEl.checked) {
-          await setupPush(secretPath);
-        } else {
-          // Unsubscribe — setupPush handles the OFF case (cleans up existing subscription)
-          await setupPush(secretPath);
-        }
+        // setupPush reads the RECEIVE_KEY flag we just wrote.
+        // When ON: subscribes and registers with server.
+        // When OFF: unsubscribes from PushManager and removes from server.
+        await setupPush(secretPath);
       });
     }
 

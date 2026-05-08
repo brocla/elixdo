@@ -1,3 +1,10 @@
+// Web Push flow:
+// 1. Each browser gets a stable device_id (UUID in localStorage).
+// 2. When the user opts in, the browser subscribes via PushManager and POSTs
+//    the resulting endpoint + keys to the server (stored in push_subscriptions).
+// 3. When an item is added, the server sends a push to all subscriptions except
+//    the originating device_id, so you are not notified by your own additions.
+
 const DEVICE_ID_KEY = "elixdo_device_id";
 const RECEIVE_KEY = "elixdo_receive_notifications";
 const SUPPRESS_KEY = "elixdo_suppress_notifications";
