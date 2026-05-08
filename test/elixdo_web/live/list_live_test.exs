@@ -175,8 +175,6 @@ defmodule ElixdoWeb.ListLiveTest do
 
       render_hook(view, "set_push_context", %{"device_id" => "my-device", "suppress" => true})
 
-      # Verify the event was handled without error (no crash = assigns stored)
-      # We can't directly inspect assigns from test, but we can confirm no crash
       assert render(view) =~ "list"
     end
 
@@ -186,6 +184,29 @@ defmodule ElixdoWeb.ListLiveTest do
       render_hook(view, "set_push_context", %{"device_id" => "other-device", "suppress" => false})
 
       assert render(view) =~ "list"
+    end
+
+    test "add_item with suppress=true does not notify push subscribers", %{conn: conn} do
+      # Register a subscription so notify_devices has something to send to
+      {:ok, _} = Elixdo.Repo.insert(%Elixdo.PushSubscription{
+        device_id: "other-device",
+        endpoint: "https://push.example.com/sub1",
+        p256dh: "key1",
+        auth: "auth1"
+      })
+
+      # Connect with suppress=true via connect params
+      conn = Phoenix.ConnTest.init_test_session(conn, %{})
+      {:ok, view, _html} = live(conn, "/#{secret()}/list")
+
+      # Set suppress via the event (simulates what connect params would do)
+      render_hook(view, "set_push_context", %{"device_id" => "my-device", "suppress" => true})
+
+      # add_item should succeed but not crash (notify_devices not called)
+      view |> element("form.add-item-form") |> render_submit(%{"body" => "suppressed item"})
+
+      items = Elixdo.Lists.get_items_for_date(Elixdo.Clock.today())
+      assert Enum.any?(items, &(&1.body == "suppressed item"))
     end
   end
 

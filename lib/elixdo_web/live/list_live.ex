@@ -44,8 +44,8 @@ defmodule ElixdoWeb.ListLive do
      |> assign(:priority_sheet_open, false)
      |> assign(:valid_colors, ListItem.colors())
      |> assign(:valid_priorities, ListItem.priorities())
-     |> assign(:device_id, nil)
-     |> assign(:suppress_push, false)}
+     |> assign(:device_id, get_connect_params(socket)["device_id"])
+     |> assign(:suppress_push, get_connect_params(socket)["suppress"] == true)}
   end
 
   @impl true
@@ -130,7 +130,10 @@ defmodule ElixdoWeb.ListLive do
     text = String.trim(text)
 
     if text != "" do
-      Lists.create_items(socket.assigns.date, [%{body: text}])
+      Lists.create_items(socket.assigns.date, [%{body: text}],
+        device_id: socket.assigns.device_id,
+        suppress_push: socket.assigns.suppress_push
+      )
     end
 
     {:noreply, socket}
