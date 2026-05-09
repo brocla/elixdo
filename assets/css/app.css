@@ -522,7 +522,7 @@ body {
 .item.color-orange::before { background: var(--c-orange); opacity: 1; }
 
 .item.completed .item-text   { text-decoration: line-through; color: var(--text-dim); }
-.item.wiggled-out .item-text { text-decoration: line-through wavy; color: var(--text-dim); }
+.item.wiggled-out .item-text { text-decoration: line-through wavy; text-decoration-thickness: 2px; color: var(--text-dim); }
 .item.arrowed-out .item-text { text-decoration: line-through; color: var(--text-dim); }
 
 .arrow-annotation {
