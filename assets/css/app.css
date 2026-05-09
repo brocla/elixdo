@@ -158,6 +158,35 @@ body {
   flex-direction: column;
 }
 
+/* ── Swipe transition ─────────────────────────────────────────────────── */
+.swipe-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes swipe-out-left {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(-25%); opacity: 0; }
+}
+@keyframes swipe-out-right {
+  from { transform: translateX(0);   opacity: 1; }
+  to   { transform: translateX(25%); opacity: 0; }
+}
+@keyframes swipe-in-from-right {
+  from { transform: translateX(25%); opacity: 0; }
+  to   { transform: translateX(0);   opacity: 1; }
+}
+@keyframes swipe-in-from-left {
+  from { transform: translateX(-25%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.swipe-content.sliding-left         { animation: swipe-out-left      180ms ease forwards; }
+.swipe-content.sliding-right        { animation: swipe-out-right     180ms ease forwards; }
+.swipe-content.sliding-in-from-right { animation: swipe-in-from-right 220ms ease forwards; }
+.swipe-content.sliding-in-from-left  { animation: swipe-in-from-left  220ms ease forwards; }
+
 /* ═══════════════════════════════════════════════════════════════════════
    TOOLBAR
    ═══════════════════════════════════════════════════════════════════════ */

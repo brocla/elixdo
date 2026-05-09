@@ -2,6 +2,7 @@ const editableTags = new Set(["INPUT", "TEXTAREA", "SELECT"]);
 
 const Swipe = {
   mounted() {
+    this._pendingDir = null;
     let startX = null;
     let startY = null;
     let startedInToolbar = false;
@@ -21,6 +22,8 @@ const Swipe = {
       const dy = e.changedTouches[0].clientY - startY;
       // Reject if gesture is more vertical than horizontal
       if (Math.abs(dx) >= threshold && Math.abs(dy) / Math.abs(dx) <= angleThreshold) {
+        const dir = dx < 0 ? "left" : "right";
+        this._slideOut(dir);
         this.pushEvent(dx < 0 ? "next_day" : "prev_day", {});
       }
       startX = null;
@@ -35,8 +38,31 @@ const Swipe = {
     window.addEventListener("keydown", this._keyHandler);
   },
 
+  updated() {
+    if (!this._pendingDir) return;
+    const inClass = this._pendingDir === "left"
+      ? "sliding-in-from-right"
+      : "sliding-in-from-left";
+    this._pendingDir = null;
+    const content = document.getElementById("swipe-content");
+    if (!content) return;
+    content.classList.remove("sliding-left", "sliding-right");
+    content.classList.add(inClass);
+    content.addEventListener("animationend", () => {
+      content.classList.remove(inClass);
+    }, { once: true });
+  },
+
   destroyed() {
     window.removeEventListener("keydown", this._keyHandler);
+  },
+
+  _slideOut(dir) {
+    const content = document.getElementById("swipe-content");
+    if (!content) return;
+    content.classList.remove("sliding-left", "sliding-right", "sliding-in-from-left", "sliding-in-from-right");
+    content.classList.add(dir === "left" ? "sliding-left" : "sliding-right");
+    this._pendingDir = dir;
   }
 };
 
