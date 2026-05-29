@@ -257,9 +257,8 @@ body {
 .priority-btn { color: var(--text); font-size: 22px; padding: 0 4px; min-width: unset; }
 
 
-/* Search and sort buttons */
-.search-btn,
-.sort-btn {
+/* Search button */
+.search-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -272,8 +271,7 @@ body {
   cursor: pointer;
   transition: all 0.12s;
 }
-.search-btn:hover,
-.sort-btn:hover { border-color: var(--accent); color: white; }
+.search-btn:hover { border-color: var(--accent); color: white; }
 
 /* Color swatches row — same 40px height */
 .swatches-row {
@@ -862,9 +860,11 @@ body {
   .drag-handle.drag-handle--priority { opacity: 1; font-size: 26px; }
   .item-select-btn { width: 32px; height: 32px; }
   .item-select-btn.selected::after { width: 8px; height: 8px; }
-  .toolbar-btn { min-width: 40px; height: 38px; }
+  .tb-group { height: 48px; }
+  .toolbar-btn { min-width: 44px; height: 48px; }
+  .search-btn { width: 48px; height: 48px; }
   .priority-btn { font-size: 22px; padding: 0 4px; min-width: unset; }
-  .today-btn { font-size: 48px; width: 48px; }
+  .today-btn { font-size: 48px; width: 48px; height: 48px; }
   .add-item-input { font-size: 20px; padding: 0.75rem; }
   .date-header { padding: 0.75rem; }
   .nav-arrow { font-size: 2rem; padding: 0.5rem 1.2rem; }
@@ -873,4 +873,5 @@ body {
   .color-mobile-btn { display: block; }
   .priority-desktop-group { display: none; }
   .priority-mobile-btn { display: flex; align-items: center; justify-content: center; }
+  .toolbar-btn svg { width: 26px; height: 26px; }
 }

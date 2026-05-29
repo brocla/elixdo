@@ -36,6 +36,22 @@ const SearchFocus = {
   mounted() { this.el.focus() }
 }
 
+const ArrowPicker = {
+  mounted() {
+    this.handleEvent("open-arrow-picker", ({default_date}) => {
+      this.el.value = default_date || ""
+      this.el.showPicker()
+    })
+
+    this.el.addEventListener("change", () => {
+      if (this.el.value) {
+        this.pushEvent("confirm_arrow", {to_date: this.el.value})
+        this.el.value = ""
+      }
+    })
+  }
+}
+
 const PushContext = {
   mounted() {
     this.pushEvent("set_push_context", {device_id: getDeviceId(), suppress: shouldSuppress()})
@@ -51,6 +67,7 @@ Hooks.SearchFocus = SearchFocus
 Hooks.VoiceInput = VoiceInput
 Hooks.PushSettings = PushSettings
 Hooks.PushContext = PushContext
+Hooks.ArrowPicker = ArrowPicker
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {

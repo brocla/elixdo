@@ -34,7 +34,6 @@ defmodule ElixdoWeb.ListLive do
      |> assign(:items, items)
      |> assign(:selected, MapSet.new())
      |> assign(:editing_id, nil)
-     |> assign(:arrow_modal, false)
      |> assign(:arrow_item_ids, [])
      |> assign(:search_open, false)
      |> assign(:search_results, [])
@@ -226,6 +225,14 @@ defmodule ElixdoWeb.ListLive do
       Lists.update_item(item, %{status: status})
     end)
 
+    selected_ids = MapSet.new(selected_items, & &1.id)
+
+    {active, non_active} =
+      Enum.split_with(socket.assigns.items, &(&1.status == :active && &1.id not in selected_ids))
+
+    new_ids = Enum.map(active ++ non_active, & &1.id)
+    Lists.reorder_items(socket.assigns.date, new_ids)
+
     {:noreply, clear_selection(socket)}
   end
 
@@ -302,7 +309,12 @@ defmodule ElixdoWeb.ListLive do
     selected_ids = MapSet.to_list(socket.assigns.selected)
 
     if selected_ids != [] do
-      {:noreply, assign(socket, arrow_modal: true, arrow_item_ids: selected_ids)}
+      current_date = Date.to_iso8601(socket.assigns.date)
+
+      {:noreply,
+       socket
+       |> assign(arrow_item_ids: selected_ids)
+       |> push_event("open-arrow-picker", %{default_date: current_date})}
     else
       {:noreply, socket}
     end
@@ -311,17 +323,22 @@ defmodule ElixdoWeb.ListLive do
   def handle_event("confirm_arrow", %{"to_date" => to_date_str}, socket) do
     case Elixdo.DateHelper.resolve(to_date_str) do
       {:ok, to_date} ->
-        Enum.each(socket.assigns.arrow_item_ids, fn id ->
-          item = Enum.find(socket.assigns.items, &(&1.id == id))
+        arrow_ids = MapSet.new(socket.assigns.arrow_item_ids)
 
-          if item && item.status == :active do
+        Enum.each(socket.assigns.items, fn item ->
+          if item.id in arrow_ids && item.status == :active do
             Lists.arrow_item(item, to_date)
           end
         end)
 
+        {active, non_active} =
+          Enum.split_with(socket.assigns.items, &(&1.status == :active && &1.id not in arrow_ids))
+
+        new_ids = Enum.map(active ++ non_active, & &1.id)
+        Lists.reorder_items(socket.assigns.date, new_ids)
+
         {:noreply,
          assign(socket,
-           arrow_modal: false,
            arrow_item_ids: [],
            selected: MapSet.new()
          )}
@@ -331,22 +348,9 @@ defmodule ElixdoWeb.ListLive do
     end
   end
 
-  def handle_event("cancel_arrow", _, socket) do
-    {:noreply, assign(socket, arrow_modal: false, arrow_item_ids: [])}
-  end
-
   def handle_event("reorder", %{"order" => ids}, socket) do
     int_ids = Enum.map(ids, &String.to_integer(to_string(&1)))
     Lists.reorder_items(socket.assigns.date, int_ids)
-    {:noreply, socket}
-  end
-
-  def handle_event("sort_active", _, socket) do
-    {active, non_active} =
-      Enum.split_with(socket.assigns.items, &(&1.status == :active))
-
-    new_ids = Enum.map(active ++ non_active, & &1.id)
-    Lists.reorder_items(socket.assigns.date, new_ids)
     {:noreply, socket}
   end
 

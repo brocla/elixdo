@@ -15,15 +15,6 @@
           </svg>
         </button>
 
-        <%# Sort active-first %>
-        <button type="button" phx-click="sort_active" class="sort-btn" title="Sort by status">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="5" y1="2" x2="5" y2="16"/>
-            <polyline points="2,5 5,2 8,5"/>
-            <line x1="13" y1="2" x2="13" y2="16"/>
-            <polyline points="10,13 13,16 16,13"/>
-          </svg>
-        </button>
       </div>
 
       <div class="toolbar-actions">
@@ -179,19 +170,9 @@
     </div><%# /swipe-content %>
   </div>
 
-  <%# ── Arrow-forward modal ───────────────────────────────────────── %>
-  <%= if @arrow_modal do %>
-    <div class="modal-overlay">
-      <div class="elixdo-modal" phx-click-away="cancel_arrow">
-        <h3>Arrow forward to date</h3>
-        <form phx-submit="confirm_arrow">
-          <input type="date" name="to_date" required autofocus />
-          <button type="submit">Arrow</button>
-          <button type="button" phx-click="cancel_arrow">Cancel</button>
-        </form>
-      </div>
-    </div>
-  <% end %>
+  <%# ── Arrow-forward hidden date picker ──────────────────────────── %>
+  <input type="date" id="arrow-date-picker" phx-hook="ArrowPicker"
+         style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;" />
 
   <%# ── Priority bottom sheet (mobile) ──────────────────────────────── %>
   <%= if @priority_sheet_open do %>
