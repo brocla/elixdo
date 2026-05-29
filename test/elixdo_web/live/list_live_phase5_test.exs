@@ -100,7 +100,7 @@ defmodule ElixdoWeb.ListLivePhase5Test do
     assert html =~ "color-red"
   end
 
-  test "arrow out flow: modal appears, copy created on target date", %{conn: conn} do
+  test "arrow out flow: copy created on target date", %{conn: conn} do
     date = ~D[2026-05-23]
     {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "push forward"}])
     item = List.first(items)
@@ -108,10 +108,8 @@ defmodule ElixdoWeb.ListLivePhase5Test do
 
     {:ok, view, _} = live(conn, list_path("2026-05-23"))
     view |> element("[phx-click='toggle_select'][phx-value-id='#{item.id}']") |> render_click()
-    html = view |> element("[phx-click='arrow_selected']") |> render_click()
-    assert html =~ "elixdo-modal"
-
-    view |> form(".elixdo-modal form", %{to_date: target}) |> render_submit()
+    view |> element("[phx-click='arrow_selected']") |> render_click()
+    render_hook(view, "confirm_arrow", %{"to_date" => target})
     html = render(view)
     assert html =~ ~s(class="item arrowed-out")
     assert html =~ "2026-05-24"
@@ -145,7 +143,7 @@ defmodule ElixdoWeb.ListLivePhase5Test do
     end)
 
     view |> element("[phx-click='arrow_selected']") |> render_click()
-    view |> form(".elixdo-modal form", %{to_date: target}) |> render_submit()
+    render_hook(view, "confirm_arrow", %{"to_date" => target})
 
     target_items = Elixdo.Lists.get_items_for_date(~D[2026-05-27])
     assert length(target_items) == 2
