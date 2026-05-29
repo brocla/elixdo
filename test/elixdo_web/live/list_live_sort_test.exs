@@ -25,141 +25,137 @@ defmodule ElixdoWeb.ListLiveSortTest do
     |> Enum.map(& &1.body)
   end
 
-  defp sort_and_render(view) do
-    view |> element("[phx-click='sort_active']") |> render_click()
+  defp select_and_complete(view, item_id) do
+    view |> element("button.item-select-btn[phx-value-id='#{item_id}']") |> render_click()
+    view |> element("button[phx-click='set_status'][phx-value-status='completed']") |> render_click()
     render(view)
   end
 
-  test "sort_active moves active items before completed", %{conn: conn} do
+  test "completing a middle item moves it after active items", %{conn: conn} do
     date = ~D[2026-09-02]
 
     {:ok, [a, b, c]} =
       Elixdo.Lists.create_items(date, [
         %{body: "active one"},
-        %{body: "done"},
+        %{body: "complete me"},
         %{body: "active two"}
       ])
 
-    {:ok, _} = Elixdo.Lists.update_item(b, %{status: :completed})
-
     {:ok, view, _} = live(conn, list_path("2026-09-02"))
-    html = sort_and_render(view)
+    html = select_and_complete(view, b.id)
 
     bodies = item_bodies_from_html(html)
     active_pos = Enum.find_index(bodies, &(&1 == "active one"))
     active2_pos = Enum.find_index(bodies, &(&1 == "active two"))
-    done_pos = Enum.find_index(bodies, &(&1 == "done"))
+    done_pos = Enum.find_index(bodies, &(&1 == "complete me"))
 
     assert active_pos < done_pos
     assert active2_pos < done_pos
     _ = {a, c}
   end
 
-  test "sort_active preserves within-group order", %{conn: conn} do
+  test "sort preserves within-group order", %{conn: conn} do
     date = ~D[2026-09-03]
 
-    {:ok, [a, b, c, d]} =
+    {:ok, [_a, b, _c, _d]} =
       Elixdo.Lists.create_items(date, [
         %{body: "active first"},
-        %{body: "completed first"},
+        %{body: "complete me"},
         %{body: "active second"},
-        %{body: "completed second"}
+        %{body: "active third"}
       ])
 
-    {:ok, _} = Elixdo.Lists.update_item(b, %{status: :completed})
-    {:ok, _} = Elixdo.Lists.update_item(d, %{status: :completed})
-
     {:ok, view, _} = live(conn, list_path("2026-09-03"))
-    html = sort_and_render(view)
+    html = select_and_complete(view, b.id)
 
     bodies = item_bodies_from_html(html)
 
+    # Active items retain their relative order
     assert Enum.find_index(bodies, &(&1 == "active first")) <
              Enum.find_index(bodies, &(&1 == "active second"))
 
-    assert Enum.find_index(bodies, &(&1 == "completed first")) <
-             Enum.find_index(bodies, &(&1 == "completed second"))
+    assert Enum.find_index(bodies, &(&1 == "active second")) <
+             Enum.find_index(bodies, &(&1 == "active third"))
 
-    _ = {a, c}
+    # Completed item is after all active items
+    active_third_pos = Enum.find_index(bodies, &(&1 == "active third"))
+    done_pos = Enum.find_index(bodies, &(&1 == "complete me"))
+    assert active_third_pos < done_pos
   end
 
-  test "sort_active on already-sorted list is a no-op", %{conn: conn} do
+  test "completing an already-last item is a no-op on order", %{conn: conn} do
     date = ~D[2026-09-04]
 
-    {:ok, [a, b, c]} =
+    {:ok, [_a, _b, c]} =
       Elixdo.Lists.create_items(date, [
         %{body: "alpha"},
         %{body: "beta"},
-        %{body: "done"}
+        %{body: "gamma"}
       ])
 
-    {:ok, _} = Elixdo.Lists.update_item(c, %{status: :completed})
-
     {:ok, view, _} = live(conn, list_path("2026-09-04"))
-    html = sort_and_render(view)
+    html = select_and_complete(view, c.id)
 
-    assert item_bodies_from_html(html) == ["alpha", "beta", "done"]
-    _ = {a, b}
+    assert item_bodies_from_html(html) == ["alpha", "beta", "gamma"]
   end
 
-  test "sort_active on all-active list preserves order", %{conn: conn} do
+  test "completing all items preserves their order", %{conn: conn} do
     date = ~D[2026-09-05]
 
-    {:ok, _} =
+    {:ok, [a, b, c]} =
       Elixdo.Lists.create_items(date, [
         %{body: "first"},
         %{body: "second"},
         %{body: "third"}
       ])
 
+    {:ok, _} = Elixdo.Lists.update_item(a, %{status: :completed})
+    {:ok, _} = Elixdo.Lists.update_item(b, %{status: :completed})
+
+    # Complete the last remaining active item
     {:ok, view, _} = live(conn, list_path("2026-09-05"))
-    html = sort_and_render(view)
+    html = select_and_complete(view, c.id)
 
     assert item_bodies_from_html(html) == ["first", "second", "third"]
   end
 
-  test "sort_active on all-non-active list preserves order", %{conn: conn} do
+  test "abandoning an item also sorts it to the bottom", %{conn: conn} do
     date = ~D[2026-09-06]
 
     {:ok, [a, b, c]} =
       Elixdo.Lists.create_items(date, [
-        %{body: "done one"},
-        %{body: "done two"},
-        %{body: "done three"}
+        %{body: "keep one"},
+        %{body: "abandon me"},
+        %{body: "keep two"}
       ])
 
-    {:ok, _} = Elixdo.Lists.update_item(a, %{status: :completed})
-    {:ok, _} = Elixdo.Lists.update_item(b, %{status: :completed})
-    {:ok, _} = Elixdo.Lists.update_item(c, %{status: :completed})
-
     {:ok, view, _} = live(conn, list_path("2026-09-06"))
-    html = sort_and_render(view)
+    view |> element("button.item-select-btn[phx-value-id='#{b.id}']") |> render_click()
+    view |> element("button[phx-click='set_status'][phx-value-status='wiggled_out']") |> render_click()
+    html = render(view)
 
-    assert item_bodies_from_html(html) == ["done one", "done two", "done three"]
+    bodies = item_bodies_from_html(html)
+    assert Enum.find_index(bodies, &(&1 == "keep one")) <
+             Enum.find_index(bodies, &(&1 == "abandon me"))
+    assert Enum.find_index(bodies, &(&1 == "keep two")) <
+             Enum.find_index(bodies, &(&1 == "abandon me"))
+    _ = {a, c}
   end
 
-  test "sort_active persists to DB", %{conn: conn} do
+  test "sort persists to DB", %{conn: conn} do
     date = ~D[2026-09-07]
 
     {:ok, [a, b, c]} =
       Elixdo.Lists.create_items(date, [
         %{body: "active"},
-        %{body: "completed"},
+        %{body: "complete me"},
         %{body: "active two"}
       ])
 
-    {:ok, _} = Elixdo.Lists.update_item(b, %{status: :completed})
-
     {:ok, view, _} = live(conn, list_path("2026-09-07"))
-    sort_and_render(view)
+    select_and_complete(view, b.id)
 
-    assert db_bodies(date) == ["active", "active two", "completed"]
+    assert db_bodies(date) == ["active", "active two", "complete me"]
     _ = {a, c}
-  end
-
-  test "sort_active on empty list is a no-op", %{conn: conn} do
-    {:ok, view, _} = live(conn, list_path("2026-09-01"))
-    html = sort_and_render(view)
-    assert item_bodies_from_html(html) == []
   end
 end

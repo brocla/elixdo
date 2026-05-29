@@ -98,42 +98,30 @@ defmodule ElixdoWeb.ListLiveTest do
     assert html =~ "2026-05-13"
   end
 
-  describe "arrow modal" do
-    test "selecting an item and clicking arrow opens the modal", %{conn: conn} do
+  describe "arrow forward" do
+    test "clicking arrow button does not open a modal", %{conn: conn} do
       date = ~D[2026-08-01]
       {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "forward me"}])
       item = List.first(items)
       {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-01")
 
-      # Select the item
       view |> element("button.item-select-btn[phx-value-id='#{item.id}']") |> render_click()
-
-      # Click the arrow-forward toolbar button
       html = view |> element("button[phx-click='arrow_selected']") |> render_click()
 
-      # Modal must be present in the DOM
-      assert html =~ "Arrow forward to date"
-      assert html =~ ~s(name="to_date")
+      refute html =~ "Arrow forward to date"
     end
 
-    test "submitting the arrow modal moves the item and shows it on the target date", %{
-      conn: conn
-    } do
+    test "confirming a date moves the item and shows it arrowed-out", %{conn: conn} do
       date = ~D[2026-08-02]
       {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "move this item"}])
       item = List.first(items)
       {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-02")
 
-      # Select and open modal
       view |> element("button.item-select-btn[phx-value-id='#{item.id}']") |> render_click()
       view |> element("button[phx-click='arrow_selected']") |> render_click()
-
-      # Submit with a target date
-      view |> element(".elixdo-modal form") |> render_submit(%{"to_date" => "2026-08-10"})
+      render_hook(view, "confirm_arrow", %{"to_date" => "2026-08-10"})
       html = render(view)
 
-      # Modal closes and original item is now arrowed-out
-      refute html =~ "Arrow forward to date"
       assert html =~ ~s(class="item arrowed-out")
       assert html =~ "2026-08-10"
     end
@@ -146,26 +134,40 @@ defmodule ElixdoWeb.ListLiveTest do
 
       view |> element("button.item-select-btn[phx-value-id='#{item.id}']") |> render_click()
       view |> element("button[phx-click='arrow_selected']") |> render_click()
-      view |> element(".elixdo-modal form") |> render_submit(%{"to_date" => "2026-08-11"})
+      render_hook(view, "confirm_arrow", %{"to_date" => "2026-08-11"})
 
-      # Navigate to the target date — the copy should be active there
       {:ok, _view2, html} = live(conn, "/#{secret()}/list/2026-08-11")
       assert html =~ "check target date"
       assert html =~ ~s(class="item active)
     end
 
-    test "cancelling the arrow modal closes it without changing the item", %{conn: conn} do
+    test "arrowed item is sorted to the bottom of the source date", %{conn: conn} do
       date = ~D[2026-08-04]
-      {:ok, items} = Elixdo.Lists.create_items(date, [%{body: "do not move"}])
-      item = List.first(items)
+
+      {:ok, [a, b, c]} =
+        Elixdo.Lists.create_items(date, [
+          %{body: "stay one"},
+          %{body: "defer me"},
+          %{body: "stay two"}
+        ])
+
       {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-04")
 
-      view |> element("button.item-select-btn[phx-value-id='#{item.id}']") |> render_click()
+      view |> element("button.item-select-btn[phx-value-id='#{b.id}']") |> render_click()
       view |> element("button[phx-click='arrow_selected']") |> render_click()
-      html = view |> element("button[phx-click='cancel_arrow']") |> render_click()
+      render_hook(view, "confirm_arrow", %{"to_date" => "2026-08-12"})
+      html = render(view)
 
-      refute html =~ "Arrow forward to date"
-      assert html =~ ~s(class="item active)
+      bodies =
+        ~r/class="item-text">([^<]+)<\/span>/
+        |> Regex.scan(html, capture: :all_but_first)
+        |> List.flatten()
+
+      assert Enum.find_index(bodies, &(&1 == "stay one")) <
+               Enum.find_index(bodies, &(&1 == "defer me"))
+      assert Enum.find_index(bodies, &(&1 == "stay two")) <
+               Enum.find_index(bodies, &(&1 == "defer me"))
+      _ = {a, c}
     end
   end
 
