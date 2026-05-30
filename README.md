@@ -1,6 +1,9 @@
 # Elixdo
 
+[![CI](https://github.com/brocla/elixdo/actions/workflows/ci.yml/badge.svg)](https://github.com/brocla/elixdo/actions/workflows/ci.yml)
+
 A personal daily todo list, built with Phoenix LiveView and deployed on Fly.io. Each day gets its own list. Items can be formatted, colored, reordered, and pushed forward to future dates. Changes sync instantly across all open devices — desktop and mobile stay in sync in real time.
+
 
 ![Elixdo screenshot](design/Screenshot_2.0.png)
 
