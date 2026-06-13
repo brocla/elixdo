@@ -4,7 +4,7 @@ defmodule Elixdo.ListItem do
   use Ecto.Schema
   import Ecto.Changeset
 
-  @valid_priorities ["❶", "❷", "❸", "⭐", "🔥"]
+  @valid_priorities ["❶", "❷", "❸", "⭐", "🔥", "⛪"]
 
   schema "list_items" do
     field :date, :date
