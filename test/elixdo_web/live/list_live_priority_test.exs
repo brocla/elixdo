@@ -44,4 +44,18 @@ defmodule ElixdoWeb.ListLivePriorityTest do
     db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
     assert db_item.priority == nil
   end
+
+  test "completing an item clears its priority", %{conn: conn} do
+    date = ~D[2026-08-18]
+    {:ok, [item]} = Elixdo.Lists.create_items(date, [%{body: "prioritized then done"}])
+    {:ok, _} = Elixdo.Lists.update_item(item, %{priority: "🔥"})
+
+    {:ok, view, _} = live(conn, list_path("2026-08-18"))
+    view |> element("[phx-click='toggle_select'][phx-value-id='#{item.id}']") |> render_click()
+    view |> element("[phx-click='set_status'][phx-value-status='completed']") |> render_click()
+
+    db_item = Elixdo.Lists.get_items_for_date(date) |> Enum.find(&(&1.id == item.id))
+    assert db_item.status == :completed
+    assert db_item.priority == nil
+  end
 end

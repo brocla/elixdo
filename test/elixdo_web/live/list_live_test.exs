@@ -169,6 +169,36 @@ defmodule ElixdoWeb.ListLiveTest do
                Enum.find_index(bodies, &(&1 == "defer me"))
       _ = {a, c}
     end
+
+    test "deferring sorts active items first on the target date", %{conn: conn} do
+      source_date = ~D[2026-08-05]
+      target_date = ~D[2026-08-13]
+
+      {:ok, [item]} = Elixdo.Lists.create_items(source_date, [%{body: "incoming item"}])
+
+      {:ok, [_x, y, _z]} =
+        Elixdo.Lists.create_items(target_date, [
+          %{body: "target active"},
+          %{body: "target completed"},
+          %{body: "target active two"}
+        ])
+
+      {:ok, _} = Elixdo.Lists.update_item(y, %{status: :completed})
+
+      {:ok, view, _html} = live(conn, "/#{secret()}/list/2026-08-05")
+
+      view |> element("button.item-select-btn[phx-value-id='#{item.id}']") |> render_click()
+      view |> element("button[phx-click='arrow_selected']") |> render_click()
+      render_hook(view, "confirm_arrow", %{"to_date" => Date.to_iso8601(target_date)})
+
+      target_bodies =
+        target_date
+        |> Elixdo.Lists.get_items_for_date()
+        |> Enum.map(& &1.body)
+
+      assert Enum.find_index(target_bodies, &(&1 == "target completed")) ==
+               length(target_bodies) - 1
+    end
   end
 
   describe "push context" do

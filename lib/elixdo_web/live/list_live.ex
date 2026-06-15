@@ -222,7 +222,8 @@ defmodule ElixdoWeb.ListLive do
     selected_items = selected_items(socket)
 
     Enum.each(selected_items, fn item ->
-      Lists.update_item(item, %{status: status})
+      attrs = if status == :completed, do: %{status: status, priority: nil}, else: %{status: status}
+      Lists.update_item(item, attrs)
     end)
 
     selected_ids = MapSet.new(selected_items, & &1.id)
@@ -337,6 +338,8 @@ defmodule ElixdoWeb.ListLive do
         new_ids = Enum.map(active ++ non_active, & &1.id)
         Lists.reorder_items(socket.assigns.date, new_ids)
 
+        sort_active_first(to_date)
+
         {:noreply,
          assign(socket,
            arrow_item_ids: [],
@@ -408,6 +411,16 @@ defmodule ElixdoWeb.ListLive do
 
   defp selected_items(socket) do
     Enum.filter(socket.assigns.items, &MapSet.member?(socket.assigns.selected, &1.id))
+  end
+
+  defp sort_active_first(date) do
+    {active, non_active} =
+      date
+      |> Lists.get_items_for_date()
+      |> Enum.split_with(&(&1.status == :active))
+
+    new_ids = Enum.map(active ++ non_active, & &1.id)
+    Lists.reorder_items(date, new_ids)
   end
 
   defp item_class(%{status: :completed}), do: "completed"

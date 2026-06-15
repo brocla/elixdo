@@ -87,13 +87,14 @@ defmodule Elixdo.Lists.DB do
     Ecto.Multi.new()
     |> Ecto.Multi.update(
       :original,
-      ListItem.changeset(item, %{status: :arrowed_out, arrowed_to_date: to_date})
+      ListItem.changeset(item, %{status: :arrowed_out, arrowed_to_date: to_date, priority: nil})
     )
     |> Ecto.Multi.run(:copy, fn _repo, _changes ->
       create_items(to_date, [
         %{
           body: item.body,
-          color: item.color
+          color: item.color,
+          priority: item.priority
         }
       ])
     end)
