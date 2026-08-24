@@ -121,6 +121,11 @@
   --radius-btn:  6px;
   --shadow-card: 0 1px 3px oklch(0% 0 0 / 0.35), 0 2px 8px oklch(0% 0 0 / 0.20);
   --shadow-card-hover: 0 3px 12px oklch(0% 0 0 / 0.45), 0 1px 3px oklch(0% 0 0 / 0.25);
+
+  /* Item text sizing. Display and inline-edit share these so the text does
+     not change size when you tap an item to edit it. */
+  --item-font-size:   19px;
+  --item-line-height: 1.2;
 }
 
 [data-theme=light] {
@@ -593,8 +598,8 @@ body {
   min-width: 0;
   white-space: pre-wrap;
   word-break: break-word;
-  font-size: 19px;
-  line-height: 1.2;
+  font-size: var(--item-font-size);
+  line-height: var(--item-line-height);
   cursor: pointer;
 }
 .item-body.color-red    { color: oklch(72% 0.20 17); }
@@ -625,31 +630,32 @@ body {
   border-radius: 6px;
   color: var(--text);
   font-family: inherit;
-  font-size: 15px;
+  font-size: var(--item-font-size);
+  line-height: var(--item-line-height);
   resize: vertical;
   min-height: 60px;
 }
 .edit-textarea:focus { outline: none; box-shadow: 0 0 0 2px var(--accent-glow); }
 
 .save-btn {
-  padding: 5px 14px;
+  padding: 7px 16px;
   background: var(--accent);
   color: white;
   border: none;
   border-radius: 5px;
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--item-font-size);
   font-weight: 600;
   cursor: pointer;
 }
 .cancel-btn {
-  padding: 5px 14px;
+  padding: 7px 16px;
   background: var(--bg-4);
   border: 1px solid var(--border-color);
   border-radius: 5px;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--item-font-size);
   cursor: pointer;
 }
 
@@ -855,7 +861,7 @@ body {
 @media (pointer: coarse) {
   body { font-size: 1.1rem; }
   .item { padding: 16px 14px 16px 16px; gap: 12px; }
-  .item-body { font-size: 22px; line-height: 1.25; }
+  :root { --item-font-size: 22px; --item-line-height: 1.25; }
   .drag-handle { opacity: 0.4; font-size: 20px; padding: 0 0.6rem; min-width: 2rem; text-align: center; }
   .drag-handle.drag-handle--priority { opacity: 1; font-size: 26px; }
   .item-select-btn { width: 32px; height: 32px; }
