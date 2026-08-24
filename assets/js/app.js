@@ -70,8 +70,11 @@ Hooks.PushContext = PushContext
 Hooks.ArrowPicker = ArrowPicker
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+// No longPollFallbackMs: a single WebSocket error on app resume downgrades the
+// transport to long polling permanently for the life of the page, since
+// Socket#connect skips the fallback path once transport is already LongPoll.
+// Retrying the WebSocket on the normal backoff is what we want here.
 const liveSocket = new LiveSocket("/live", Socket, {
-  longPollFallbackMs: 2500,
   params: {
     _csrf_token: csrfToken,
     device_id: getDeviceId(),

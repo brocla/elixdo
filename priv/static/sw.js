@@ -33,12 +33,16 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
-  // Skip non-GET, cross-origin, API routes, and LiveView websocket
+  // Skip non-GET, cross-origin, API routes, and LiveView transports.
+  // The socket lives at /live/websocket and /live/longpoll, not /live itself,
+  // so this must be a prefix match — otherwise long-poll requests get
+  // intercepted and any network hiccup resolves to an uncached miss.
   if (
     e.request.method !== "GET" ||
     url.origin !== self.location.origin ||
     url.pathname.startsWith("/api") ||
-    url.pathname === "/live"
+    url.pathname === "/live" ||
+    url.pathname.startsWith("/live/")
   ) return;
 
   e.respondWith(
