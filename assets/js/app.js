@@ -97,6 +97,46 @@ window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 
+// ── Foreground recovery ─────────────────────────────────────────
+// Measured on an Android PWA with the app hung: the connection drops shortly
+// after backgrounding with close code 1006 (abnormal), and phoenix's reconnect
+// timer then early-returns while socket.pageHidden is true -- it calls
+// teardown() with NO callback, so it neither reconnects nor reschedules
+// (phoenix/socket.js, `if(this.pageHidden){ ... this.teardown(); return }`).
+//
+// pageHidden is cleared only by phoenix's visibilitychange handler, and Chrome
+// does not reliably fire visibilitychange when a PWA returns to the foreground.
+// The recorded terminal state was: pageHidden true while
+// document.visibilityState === "visible", conn null, connectClock frozen at its
+// pre-background value, no reconnect and no channel rejoin scheduled. Nothing
+// left intended to recover, so the topbar crept toward the right edge forever
+// and only killing the app cleared it.
+//
+// Poll rather than trusting an event that does not arrive.
+const RECOVERY_POLL_MS = 3000
+const RELOAD_AFTER_MS = 15000
+let downSince = null
+
+setInterval(() => {
+  const socket = liveSocket.socket
+
+  if (document.visibilityState !== "visible" || socket.isConnected()) {
+    downSince = null
+    return
+  }
+  if (socket.connectionState() === "connecting") return
+
+  downSince = downSince || Date.now()
+
+  // Clearing pageHidden is the load-bearing part: without it phoenix's own
+  // reconnect timer keeps taking the early return and tearing down instead.
+  socket.pageHidden = false
+  socket.connect()
+
+  // Last resort if reconnecting never takes -- what killing the app achieves.
+  if (Date.now() - downSince > RELOAD_AFTER_MS) window.location.reload()
+}, RECOVERY_POLL_MS)
+
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
