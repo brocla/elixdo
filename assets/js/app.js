@@ -70,10 +70,13 @@ Hooks.PushContext = PushContext
 Hooks.ArrowPicker = ArrowPicker
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
-// No longPollFallbackMs: a single WebSocket error on app resume downgrades the
-// transport to long polling permanently for the life of the page, since
-// Socket#connect skips the fallback path once transport is already LongPoll.
-// Retrying the WebSocket on the normal backoff is what we want here.
+// No longPollFallbackMs. The downgrade it performs is one-way: Socket#connect
+// skips the fallback path once transport is already LongPoll, and nothing ever
+// calls replaceTransport back to WebSocket, so one flaky moment costs the page
+// its WebSocket for as long as it lives. This app runs on networks where
+// WebSockets work, so that trade is not worth making. Set it if Elixdo ever
+// needs to work somewhere WebSockets are blocked outright -- without it, it
+// simply will not connect there.
 const liveSocket = new LiveSocket("/live", Socket, {
   params: {
     _csrf_token: csrfToken,
@@ -98,27 +101,19 @@ window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 liveSocket.connect()
 
 // ── Foreground recovery backstop ──────────────────────────────────
-// Backgrounding this PWA for a few minutes used to leave it permanently hung on
-// return: Chrome does not fire visibilitychange when it unfreezes a page, so
-// phoenix's cached socket.pageHidden stayed true, its reconnect timer took the
-// early return that tears down without rescheduling, and nothing was left that
-// intended to reconnect. Diagnosed with dev/diagnostics and reported as
-// phoenixframework/phoenix#6804; fixed in phoenix 1.8.13, which derives
-// pageHidden from visibilityState at read time and listens for `resume`.
+// Phoenix's reconnect timer calls teardown() with no callback and no
+// reschedule when it fires while the page is hidden, so recovery rests
+// entirely on a later visibilitychange or resume. If a foreground delivers
+// neither, phoenix has nothing scheduled and this does. Armed by the socket
+// close and idle while connected.
 //
-// This remains as a backstop rather than a workaround. The reconnect timer
-// still calls teardown() with no callback and no reschedule when it fires
-// while genuinely hidden (socket.js), so recovery there depends entirely on a
-// later visibilitychange or resume. If a foreground ever delivers neither --
-// which is the class of browser behaviour that caused #6804 in the first place
-// -- phoenix has nothing scheduled and this does.
+// Chrome not firing visibilitychange on resume is what made that gap bite:
+// phoenixframework/phoenix#6804, fixed in 1.8.13. See dev/diagnostics for the
+// harness that found it.
 //
-// It is armed by the socket close, which every failing cycle we recorded did
-// emit, and it costs nothing while connected.
 // The first delay is 3s deliberately. Phoenix recovers a frozen-page resume in
 // well under a second, so anything shorter races it for no benefit. At 3s this
-// can only fire when phoenix has genuinely failed to act -- which makes it a
-// clear signal worth reporting upstream rather than an ambiguous overlap.
+// can only fire when phoenix has genuinely failed to act.
 const RETRY_BACKOFF_MS = [3000, 5000, 10000]
 const RELOAD_AFTER_MS = 30000
 

@@ -33,10 +33,12 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   const url = new URL(e.request.url);
-  // Skip non-GET, cross-origin, API routes, and LiveView transports.
-  // The socket lives at /live/websocket and /live/longpoll, not /live itself,
-  // so this must be a prefix match — otherwise long-poll requests get
-  // intercepted and any network hiccup resolves to an uncached miss.
+  // Skip non-GET, cross-origin, API routes, and LiveView transports. The socket
+  // lives at /live/websocket and /live/longpoll, not /live itself, so this has
+  // to be a prefix match. Nothing reaches it today — WebSocket upgrades do not
+  // fire fetch events, and app.js configures no long-poll fallback — but it
+  // becomes load-bearing the moment that fallback is enabled, since an
+  // intercepted poll resolves to an uncached miss on any network hiccup.
   if (
     e.request.method !== "GET" ||
     url.origin !== self.location.origin ||
