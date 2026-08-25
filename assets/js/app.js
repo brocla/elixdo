@@ -97,7 +97,9 @@ window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 
-// ── Foreground recovery ─────────────────────────────────────────
+// ── Foreground recovery ────────────────────────────────────────
+// TODO: remove once phoenixframework/phoenix_live_view#4383 is fixed upstream.
+//
 // Measured on an Android PWA with the app hung: the connection drops shortly
 // after backgrounding with close code 1006 (abnormal), and phoenix's reconnect
 // timer then early-returns while socket.pageHidden is true -- it calls
@@ -105,22 +107,29 @@ liveSocket.connect()
 // (phoenix/socket.js, `if(this.pageHidden){ ... this.teardown(); return }`).
 //
 // pageHidden is cleared only by phoenix's visibilitychange handler, and Chrome
-// does not reliably fire visibilitychange when a PWA returns to the foreground.
-// The recorded terminal state was: pageHidden true while
-// document.visibilityState === "visible", conn null, connectClock frozen at its
-// pre-background value, no reconnect and no channel rejoin scheduled. Nothing
-// left intended to recover, so the topbar crept toward the right edge forever
-// and only killing the app cleared it.
-//
-// Poll rather than trusting an event that does not arrive.
+// does not fire visibilitychange when it unfreezes a backgrounded PWA. The
+// recorded terminal state was: pageHidden true while document.hidden was
+// false, conn null, connectClock frozen at its pre-background value, no
+// reconnect and no channel rejoin scheduled. Nothing left intended to recover,
+// so the topbar crept toward the right edge forever and only killing the app
+// cleared it.
 const RECOVERY_POLL_MS = 3000
 const RELOAD_AFTER_MS = 15000
-let downSince = null
+const RETRY_BACKOFF_MS = [1000, 2000, 5000, 10000]
 
-setInterval(() => {
+let downSince = null
+let retryTimer = null
+let retryTries = 0
+
+// Reconnect if the page is visible and the socket is down.
+//
+// document.hidden is read directly on every call, never cached. Caching that
+// value behind an event is precisely the staleness this whole block exists to
+// work around.
+function attemptRecovery() {
   const socket = liveSocket.socket
 
-  if (document.visibilityState !== "visible" || socket.isConnected()) {
+  if (document.hidden || socket.isConnected()) {
     downSince = null
     return
   }
@@ -128,14 +137,62 @@ setInterval(() => {
 
   downSince = downSince || Date.now()
 
-  // Clearing pageHidden is the load-bearing part: without it phoenix's own
-  // reconnect timer keeps taking the early return and tearing down instead.
+  // connect() is what actually recovers us -- it checks conn, which teardown
+  // left null, and never consults pageHidden. Clearing the flag additionally
+  // restores phoenix's own reconnect timer for subsequent drops.
   socket.pageHidden = false
   socket.connect()
 
   // Last resort if reconnecting never takes -- what killing the app achieves.
   if (Date.now() - downSince > RELOAD_AFTER_MS) window.location.reload()
-}, RECOVERY_POLL_MS)
+}
+
+// Retry armed on close, cancelled on open.
+//
+// The close is the reliable signal: every failing cycle recorded on the device
+// had a sock:close (code 1006). The lifecycle events are the unreliable part,
+// so this loop deliberately depends on none of them -- it keeps ticking while
+// hidden (doing nothing) and recovers on its own once the page is visible
+// again, whether or not any event announces that.
+function scheduleRetry() {
+  clearTimeout(retryTimer)
+  const delay = RETRY_BACKOFF_MS[retryTries] || RETRY_BACKOFF_MS[RETRY_BACKOFF_MS.length - 1]
+  retryTries = Math.min(retryTries + 1, RETRY_BACKOFF_MS.length)
+
+  retryTimer = setTimeout(() => {
+    if (liveSocket.socket.isConnected()) return cancelRetry()
+    attemptRecovery()
+    scheduleRetry()
+  }, delay)
+}
+
+function cancelRetry() {
+  clearTimeout(retryTimer)
+  retryTimer = null
+  retryTries = 0
+}
+
+// The shortest backoff is 1s deliberately. Phoenix's own reconnect timer fires
+// once at ~10ms and tears the connection down; an attempt of ours in flight at
+// that moment gets killed mid-handshake ("WebSocket is closed before the
+// connection is established"). Let it take its one abortive swing first.
+liveSocket.socket.onClose(() => scheduleRetry())
+liveSocket.socket.onOpen(() => cancelRetry())
+
+// Chrome fires `resume` when it unfreezes a page, and on this device it arrives
+// even on the cycles where visibilitychange never does. It is not load-bearing
+// -- the retry loop above recovers without it -- it just collapses the backoff
+// wait to nothing.
+document.addEventListener("resume", () => {
+  if (liveSocket.socket.isConnected()) return
+  retryTries = 0
+  attemptRecovery()
+  scheduleRetry()
+})
+
+// Retained as a net while the retry path proves itself against a real
+// freeze-path failure. Remove once that is confirmed.
+setInterval(attemptRecovery, RECOVERY_POLL_MS)
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
