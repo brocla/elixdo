@@ -97,22 +97,24 @@ window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 // connect if there are any LiveViews on the page
 liveSocket.connect()
 
-// ── Foreground recovery ────────────────────────────────────────
-// TODO: remove once phoenixframework/phoenix_live_view#4383 is fixed upstream.
+// ── Foreground recovery backstop ──────────────────────────────────
+// Backgrounding this PWA for a few minutes used to leave it permanently hung on
+// return: Chrome does not fire visibilitychange when it unfreezes a page, so
+// phoenix's cached socket.pageHidden stayed true, its reconnect timer took the
+// early return that tears down without rescheduling, and nothing was left that
+// intended to reconnect. Diagnosed with dev/diagnostics and reported as
+// phoenixframework/phoenix#6804; fixed in phoenix 1.8.13, which derives
+// pageHidden from visibilityState at read time and listens for `resume`.
 //
-// Measured on an Android PWA with the app hung: the connection drops shortly
-// after backgrounding with close code 1006 (abnormal), and phoenix's reconnect
-// timer then early-returns while socket.pageHidden is true -- it calls
-// teardown() with NO callback, so it neither reconnects nor reschedules
-// (phoenix/socket.js, `if(this.pageHidden){ ... this.teardown(); return }`).
+// This remains as a backstop rather than a workaround. The reconnect timer
+// still calls teardown() with no callback and no reschedule when it fires
+// while genuinely hidden (socket.js), so recovery there depends entirely on a
+// later visibilitychange or resume. If a foreground ever delivers neither --
+// which is the class of browser behaviour that caused #6804 in the first place
+// -- phoenix has nothing scheduled and this does.
 //
-// pageHidden is cleared only by phoenix's visibilitychange handler, and Chrome
-// does not fire visibilitychange when it unfreezes a backgrounded PWA. The
-// recorded terminal state was: pageHidden true while document.hidden was
-// false, conn null, connectClock frozen at its pre-background value, no
-// reconnect and no channel rejoin scheduled. Nothing left intended to recover,
-// so the topbar crept toward the right edge forever and only killing the app
-// cleared it.
+// It is armed by the socket close, which every failing cycle we recorded did
+// emit, and it costs nothing while connected.
 const RELOAD_AFTER_MS = 15000
 const RETRY_BACKOFF_MS = [1000, 2000, 5000, 10000]
 
@@ -120,11 +122,8 @@ let downSince = null
 let retryTimer = null
 let retryTries = 0
 
-// Reconnect if the page is visible and the socket is down.
-//
-// document.hidden is read directly on every call, never cached. Caching that
-// value behind an event is precisely the staleness this whole block exists to
-// work around.
+// Reconnect if the page is visible and the socket is down. document.hidden is
+// read directly on every call, never cached -- that staleness was the bug.
 function attemptRecovery() {
   const socket = liveSocket.socket
 
@@ -136,10 +135,6 @@ function attemptRecovery() {
 
   downSince = downSince || Date.now()
 
-  // connect() is what actually recovers us -- it checks conn, which teardown
-  // left null, and never consults pageHidden. Clearing the flag additionally
-  // restores phoenix's own reconnect timer for subsequent drops.
-  socket.pageHidden = false
   socket.connect()
 
   // Last resort if reconnecting never takes -- what killing the app achieves.
@@ -177,17 +172,6 @@ function cancelRetry() {
 // connection is established"). Let it take its one abortive swing first.
 liveSocket.socket.onClose(() => scheduleRetry())
 liveSocket.socket.onOpen(() => cancelRetry())
-
-// Chrome fires `resume` when it unfreezes a page, and on this device it arrives
-// even on the cycles where visibilitychange never does. It is not load-bearing
-// -- the retry loop above recovers without it -- it just collapses the backoff
-// wait to nothing.
-document.addEventListener("resume", () => {
-  if (liveSocket.socket.isConnected()) return
-  retryTries = 0
-  attemptRecovery()
-  scheduleRetry()
-})
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
