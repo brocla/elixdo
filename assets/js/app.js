@@ -113,7 +113,6 @@ liveSocket.connect()
 // reconnect and no channel rejoin scheduled. Nothing left intended to recover,
 // so the topbar crept toward the right edge forever and only killing the app
 // cleared it.
-const RECOVERY_POLL_MS = 3000
 const RELOAD_AFTER_MS = 15000
 const RETRY_BACKOFF_MS = [1000, 2000, 5000, 10000]
 
@@ -189,10 +188,6 @@ document.addEventListener("resume", () => {
   attemptRecovery()
   scheduleRetry()
 })
-
-// Retained as a net while the retry path proves itself against a real
-// freeze-path failure. Remove once that is confirmed.
-setInterval(attemptRecovery, RECOVERY_POLL_MS)
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
