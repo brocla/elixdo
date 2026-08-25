@@ -46,3 +46,7 @@ npm-debug.log
 elixdo*.md
 db_deletes.md
 MCP_SERVER_PLAN.md
+
+# Python bytecode from dev/diagnostics
+__pycache__/
+*.pyc
