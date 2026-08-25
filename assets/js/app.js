@@ -115,8 +115,12 @@ liveSocket.connect()
 //
 // It is armed by the socket close, which every failing cycle we recorded did
 // emit, and it costs nothing while connected.
-const RELOAD_AFTER_MS = 15000
-const RETRY_BACKOFF_MS = [1000, 2000, 5000, 10000]
+// The first delay is 3s deliberately. Phoenix recovers a frozen-page resume in
+// well under a second, so anything shorter races it for no benefit. At 3s this
+// can only fire when phoenix has genuinely failed to act -- which makes it a
+// clear signal worth reporting upstream rather than an ambiguous overlap.
+const RETRY_BACKOFF_MS = [3000, 5000, 10000]
+const RELOAD_AFTER_MS = 30000
 
 let downSince = null
 let retryTimer = null
@@ -166,10 +170,6 @@ function cancelRetry() {
   retryTries = 0
 }
 
-// The shortest backoff is 1s deliberately. Phoenix's own reconnect timer fires
-// once at ~10ms and tears the connection down; an attempt of ours in flight at
-// that moment gets killed mid-handshake ("WebSocket is closed before the
-// connection is established"). Let it take its one abortive swing first.
 liveSocket.socket.onClose(() => scheduleRetry())
 liveSocket.socket.onOpen(() => cancelRetry())
 
